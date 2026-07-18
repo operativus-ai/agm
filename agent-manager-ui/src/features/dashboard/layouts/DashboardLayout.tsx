@@ -12,6 +12,7 @@ import type { NavItem as NavItemDef } from '../../../shared/nav/navManifest';
 import { useLicense } from '../../../shared/license/useLicense';
 // Edition nav manifest — resolves to an empty stub in the Core build (agm-core-oss-execution.md §4.5).
 import { eeNavGroups } from '@ee/nav';
+import { eeTopbarWidgets } from '@ee/topbar';
 
 // Operator-configurable support contact. Set VITE_SUPPORT_EMAIL at build time
 // to override the placeholder. Without this, the footer mailto link falls
@@ -281,6 +282,7 @@ export const DashboardLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-6">
+            {eeTopbarWidgets}
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-active-green shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse"></div>
               <span className="text-[10px] sm:text-xs font-mono text-active-green">SYSTEM_ONLINE</span>
