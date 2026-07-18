@@ -21,8 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Domain Responsibility: Bundle the last remaining admin-gated endpoints — singletons
  *   and 2-endpoint clusters across {@code ApprovalsController}, {@code IncidentResponseController},
- *   {@code SettingsController}, {@code SloController}, and
- *   {@code observability.SecurityInterceptsController} — into a single focused authz pin.
+ *   {@code SettingsController} — into a single focused authz pin. (The SLO and
+ *   security-intercepts pins moved to the agm-enterprise repo with their controllers.)
  *   Closes 7 TODO entries on {@link com.operativus.agentmanager.arch.AdminEndpointCoverageArchTest}.
  *
  *   <p>Each endpoint matrix: anonymous → 401, ROLE_USER → 403, ROLE_ADMIN → gate-cleared
@@ -164,46 +164,6 @@ public class MiscAdminAuthzRuntimeTest extends BaseIntegrationTest {
         HttpHeaders adminAuth = adminHeaders("misc-us-admin");
         ResponseEntity<String> resp = exchange("/api/v1/settings",
                 HttpMethod.PUT, Map.of("key", "value"), adminAuth);
-        assertGateCleared(resp);
-    }
-
-    // ─── GET /api/v1/observability/slo-status (getSloStatus) ────────────────
-
-    @Test
-    void getSloStatus_unauthenticated_returns401() {
-        assertEquals(HttpStatus.UNAUTHORIZED, getNoAuth("/api/v1/observability/slo-status").getStatusCode());
-    }
-
-    @Test
-    void getSloStatus_roleUser_returns403() {
-        HttpHeaders userAuth = userHeaders("misc-slo-user");
-        assertEquals(HttpStatus.FORBIDDEN, get("/api/v1/observability/slo-status", userAuth).getStatusCode());
-    }
-
-    @Test
-    void getSloStatus_roleAdmin_clearsGate() {
-        HttpHeaders adminAuth = adminHeaders("misc-slo-admin");
-        ResponseEntity<String> resp = get("/api/v1/observability/slo-status", adminAuth);
-        assertGateCleared(resp);
-    }
-
-    // ─── GET /api/v1/observability/security-intercepts (getCounts) ──────────
-
-    @Test
-    void securityIntercepts_unauthenticated_returns401() {
-        assertEquals(HttpStatus.UNAUTHORIZED, getNoAuth("/api/v1/observability/security-intercepts").getStatusCode());
-    }
-
-    @Test
-    void securityIntercepts_roleUser_returns403() {
-        HttpHeaders userAuth = userHeaders("misc-si-user");
-        assertEquals(HttpStatus.FORBIDDEN, get("/api/v1/observability/security-intercepts", userAuth).getStatusCode());
-    }
-
-    @Test
-    void securityIntercepts_roleAdmin_clearsGate() {
-        HttpHeaders adminAuth = adminHeaders("misc-si-admin");
-        ResponseEntity<String> resp = get("/api/v1/observability/security-intercepts", adminAuth);
         assertGateCleared(resp);
     }
 

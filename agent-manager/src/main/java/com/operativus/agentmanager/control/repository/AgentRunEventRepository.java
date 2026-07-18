@@ -76,7 +76,7 @@ public interface AgentRunEventRepository extends JpaRepository<AgentRunEventEnti
     /**
      * @summary Org-wide resumable feed: events for the whole tenant (every agent) with
      *     {@code id > sinceId}, ordered by monotonic {@code id}. Drives the org-wide "all agents"
-     *     SSE stream ({@code OrgEventSseController}). Strictly org-scoped (a null {@code orgId}
+     *     SSE stream (the enterprise org-event SSE controller). Strictly org-scoped (a null {@code orgId}
      *     matches only null-org rows) so one tenant can never tail another's events.
      */
     List<AgentRunEventEntity> findByOrgIdAndIdGreaterThanOrderByIdAsc(String orgId, Long sinceId);

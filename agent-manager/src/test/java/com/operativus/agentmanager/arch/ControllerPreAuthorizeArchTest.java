@@ -120,9 +120,7 @@ public class ControllerPreAuthorizeArchTest {
     private static final Map<String, Integer> ALL_METHODS_GATED_NO_CLASS = new TreeMap<>(Map.ofEntries(
             Map.entry("BackgroundJobController", 6),
             Map.entry("ComplianceController", 4),
-            Map.entry("IncidentResponseController", 3),
-            Map.entry("SecurityInterceptsController", 1),
-            Map.entry("SloController", 1)));
+            Map.entry("IncidentResponseController", 3)));
 
     /**
      * Controllers with no class-level {@code @PreAuthorize} where SOME but not all methods
@@ -211,7 +209,6 @@ public class ControllerPreAuthorizeArchTest {
             "AgentsController",               // tenant-scoped: list/run own agents
             "BudgetExceededController",       // tenant-scoped: FinOps signals for caller's org
             "ConfigController",               // tenant-scoped: per-org configuration reads
-            "DelegationTopologyController",   // read-only diagnostic
             "DiagnosticsController",          // read-only diagnostic
             "KnowledgeBaseController",        // tenant-scoped: KB CRUD scoped to caller's orgId
             "KnowledgeController",            // tenant-scoped: ingest/search/list owned KBs
@@ -219,18 +216,14 @@ public class ControllerPreAuthorizeArchTest {
             "McpController",                  // tenant-scoped: MCP tool surface for caller
             "MemoryTaggingController",        // tenant-scoped: memory tag operations
             "ObservabilityController",        // read-only diagnostic
-            "OrchestrationAggregateController", // read-only diagnostic
-            "OrgEventSseController",          // tenant-scoped: caller's org-wide events (AgentContextHolder.getOrgId())
             "RegistryController",             // tenant-scoped: agent registry reads
+            "SafetyAggregateController",      // read-only diagnostic (feeds Core AgentSafetyTab)
             "RunEventSseController",          // self-scoped: caller's own run events
             "RunTelemetryController",         // self-scoped: caller's own run telemetry
             "RunsController",                 // self-scoped: caller's own runs
-            "SafetyAggregateController",      // read-only diagnostic
-            "SessionAggregateController",     // read-only diagnostic
             "SessionController",              // self-scoped: caller's own sessions
             "SseTokenController",             // self-scoped: caller's own SSE token issuance
             "TeamsController",                // audited PR #970: tenant-scoped (every TeamService method uses callerOrgId() — getAllTeams/searchTeams/getTeamById/createTeam/updateTeam/deleteTeam/archiveTeam/restoreTeam/cloneTeam/getTeamHealth + all members/edges paths)
-            "ToolAggregateController",        // read-only diagnostic
             "ToolController"));                // tenant-scoped: tool listing for caller
             // === Suspected-gap entries closed in earlier PRs ===
             // PiiAdminController — closed by PR #968 (now in FULLY_CLASS_GATED)

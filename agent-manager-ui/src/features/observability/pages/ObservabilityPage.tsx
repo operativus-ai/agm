@@ -6,29 +6,20 @@ import { PageContainer } from '../../../shared/components/ui/PageContainer';
 import { Tabs } from '../../../shared/components/ui/Tabs';
 import { AlertEventHistoryPanel } from '../components/AlertEventHistoryPanel';
 import { BackgroundJobMonitorTab } from '../components/BackgroundJobMonitorTab';
-import { DelegationTopologyTab } from '../components/DelegationTopologyTab';
 import { EvaluationMatrix } from '../components/EvaluationMatrix';
-import { OrchestrationAnalyticsTab } from '../components/OrchestrationAnalyticsTab';
 import { OtlpSettings } from '../components/OtlpSettings';
 import { SafetyAnalyticsTab } from '../components/SafetyAnalyticsTab';
-import { SessionAnalyticsTab } from '../components/SessionAnalyticsTab';
-import { SloCompliancePanel } from '../components/SloCompliancePanel';
-import { ToolUsageAnalyticsTab } from '../components/ToolUsageAnalyticsTab';
 import { JvmDiagnosticsPanel } from '../components/JvmDiagnosticsPanel';
 import { LiveEventsTab } from '../components/LiveEventsTab';
+import type { TabDef } from '../../../shared/tabs/tabDefs';
+// Edition tab contributions — empty stubs in the Core build (agm-core-oss-execution.md §4.5).
+import { eeOperationsTabs, eeAnalyticsTabs } from '@ee/observability-tabs';
 
 type GroupId = 'operations' | 'analytics';
-
-interface TabDef {
-    slug: string;
-    label: string;
-    content: React.ReactNode;
-}
 
 const OPERATIONS_TABS: TabDef[] = [
     { slug: 'system-health', label: 'System Health', content: <OtlpSettings /> },
     { slug: 'live-events', label: 'Live Events', content: <LiveEventsTab /> },
-    { slug: 'slos', label: 'SLOs', content: <SloCompliancePanel /> },
     { slug: 'alerts-history', label: 'Alerts History', content: <AlertEventHistoryPanel /> },
     { slug: 'background-jobs', label: 'Background Jobs', content: <BackgroundJobMonitorTab /> },
     { slug: 'diagnostics', label: 'Diagnostics', content: <JvmDiagnosticsPanel /> },
@@ -36,16 +27,14 @@ const OPERATIONS_TABS: TabDef[] = [
 
 const ANALYTICS_TABS: TabDef[] = [
     { slug: 'run-analytics', label: 'Run Analytics', content: <EvaluationMatrix /> },
-    { slug: 'orchestration', label: 'Orchestration', content: <OrchestrationAnalyticsTab /> },
-    { slug: 'tools', label: 'Tools', content: <ToolUsageAnalyticsTab /> },
-    { slug: 'delegation-topology', label: 'Delegation Topology', content: <DelegationTopologyTab /> },
     { slug: 'safety', label: 'Safety', content: <SafetyAnalyticsTab /> },
-    { slug: 'sessions', label: 'Sessions', content: <SessionAnalyticsTab /> },
 ];
 
+// Edition tabs (SLO, orchestration/tool/session analytics, delegation topology, …)
+// append via the @ee/observability-tabs manifest — empty in the Core build.
 const GROUPS: Record<GroupId, { label: string; tabs: TabDef[] }> = {
-    operations: { label: 'Operations', tabs: OPERATIONS_TABS },
-    analytics: { label: 'Analytics', tabs: ANALYTICS_TABS },
+    operations: { label: 'Operations', tabs: [...OPERATIONS_TABS, ...eeOperationsTabs] },
+    analytics: { label: 'Analytics', tabs: [...ANALYTICS_TABS, ...eeAnalyticsTabs] },
 };
 
 const isGroup = (v: string | null): v is GroupId => v === 'operations' || v === 'analytics';

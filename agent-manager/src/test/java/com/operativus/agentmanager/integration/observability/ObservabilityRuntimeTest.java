@@ -8,7 +8,6 @@ import com.operativus.agentmanager.compute.advisor.AgentLoggingAdvisor;
 import com.operativus.agentmanager.compute.advisor.OtlpSpanExportAdvisor;
 import com.operativus.agentmanager.compute.config.AgentMdcFilter;
 import com.operativus.agentmanager.compute.monitoring.GenAiMetricsAdvisor;
-import com.operativus.agentmanager.control.service.SloTrackingService;
 import com.operativus.agentmanager.integration.BaseIntegrationTest;
 import com.operativus.agentmanager.integration.support.FakeChatModel;
 import com.operativus.agentmanager.integration.support.FakeChatModelConfig;
@@ -44,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   health/prometheus, the per-request advisor chain that emits metrics/spans/logs
  *   ({@link GenAiMetricsAdvisor}, {@link OtlpSpanExportAdvisor}, {@link AgentLoggingAdvisor}),
  *   the MDC-propagating request filter ({@link AgentMdcFilter}), the {@code MonitoringController}
- *   aggregation endpoints, and {@link SloTrackingService}'s meter-registry-backed SLO readout.
+ *   aggregation endpoints. (The SLO readout moved to agm-enterprise with SloTrackingService.)
  * State: Stateless test class. The Logback ListAppender is attached/detached per test
  *   ({@link #resetState()} / {@link #detachAppenders()}) so assertions in one case don't
  *   leak log events into the next.
@@ -64,7 +63,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *     virtual threads is guaranteed by the JDK but here we can only verify the filter
  *     wires the keys on an inbound request — cross-thread assertion would require
  *     spawning a virtual thread inside the advisor chain and snapshotting MDC there.
- *   - Spec §20.9: {@link SloTrackingService#getSloStatus()} queries metrics named
  *     {@code agent.execution.duration}, {@code agent.runs.completed},
  *     {@code agent.runs.failed} — a grep of the codebase shows no producer for any of
  *     these three. The service therefore always reads 0 / 0, reports success_rate=1.0
@@ -81,7 +79,6 @@ public class ObservabilityRuntimeTest extends BaseIntegrationTest {
     @Autowired private GenAiMetricsAdvisor genAiMetricsAdvisor;
     @Autowired private AgentLoggingAdvisor agentLoggingAdvisor;
     @Autowired private AgentMdcFilter agentMdcFilter;
-    @Autowired private SloTrackingService sloTrackingService;
     @Autowired private FakeChatModel fakeModel;
 
     private ListAppender<ILoggingEvent> agentLoggingAppender;
@@ -349,47 +346,6 @@ public class ObservabilityRuntimeTest extends BaseIntegrationTest {
         assertTrue(caps.getBody().stream().anyMatch(c -> agentRef.equals(c.get("agentId"))),
                 "seeded sandbox capability row must be returned — the endpoint enumerates configured capabilities. "
                         + "GAP §20.8: there is no separate container liveness/reachability probe in MonitoringController.");
-    }
-
-    // ─── §20 Case 9 — SloTrackingService.getSloStatus() shape ───
-
-    /**
-     * Spec §20.9. {@link SloTrackingService#getSloStatus()} queries three Micrometer meters:
-     *   {@code agent.execution.duration} (timer), {@code agent.runs.completed} (counter),
-     *   {@code agent.runs.failed} (counter). A grep of {@code src/main} confirms none of
-     *   those three names are produced anywhere in the codebase — they are orphan readers.
-     *   On a fresh test, both counters are null, so the service returns {@code successRate=1.0}
-     *   (from the {@code total > 0 ? … : 1.0} fallback) and {@code latencyP99=0}. The SHAPE
-     *   of the response is still the spec contract — we pin it, and flag the producer gap.
-     */
-    @Test
-    void sloTrackingService_reportsSloShape_andFlagsOrphanMetricProducerGap() {
-        Map<String, Object> status = sloTrackingService.getSloStatus();
-        assertNotNull(status, "getSloStatus must never return null");
-        assertNotNull(status.get("evaluated_at"), "evaluated_at timestamp must be set");
-
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> slos = (List<Map<String, Object>>) status.get("slos");
-        assertNotNull(slos, "slos list must be present");
-        assertEquals(2, slos.size(),
-                "exactly two SLOs are defined today: agent_latency_p99 + agent_success_rate");
-
-        Map<String, Object> latency = slos.stream()
-                .filter(s -> "agent_latency_p99".equals(s.get("id"))).findFirst().orElseThrow();
-        Map<String, Object> successRate = slos.stream()
-                .filter(s -> "agent_success_rate".equals(s.get("id"))).findFirst().orElseThrow();
-
-        assertAll("case 9 — SLO shape + orphan-producer gap",
-                () -> assertEquals("ms", latency.get("unit")),
-                () -> assertEquals("LTE", latency.get("comparison")),
-                () -> assertEquals("ratio", successRate.get("unit")),
-                () -> assertEquals("GTE", successRate.get("comparison")),
-                () -> assertEquals(true, successRate.get("compliant"),
-                        "GAP §20.9: no producer exists for `agent.runs.completed` / `agent.runs.failed`, so the "
-                                + "counters are null → successRate falls back to 1.0 → vacuously compliant. Flip "
-                                + "this to a positive-signal assertion once the producers are wired."),
-                () -> assertEquals(0.0, ((Number) latency.get("current_value")).doubleValue(), 0.0001,
-                        "GAP §20.9: same producer-gap for `agent.execution.duration` timer — p99 is 0 on zero samples."));
     }
 
     // ─── helpers ───

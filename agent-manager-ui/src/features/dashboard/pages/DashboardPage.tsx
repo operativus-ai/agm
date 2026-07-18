@@ -8,7 +8,8 @@ import { AlertSummaryWidget } from '../components/AlertSummaryWidget';
 import { AnomalyDetectionWidget } from '../components/AnomalyDetectionWidget';
 import { HitlQueueWidget } from '../components/HitlQueueWidget';
 import { QuickActionsWidget } from '../components/QuickActionsWidget';
-import { SecurityInterceptsWidget } from '../components/SecurityInterceptsWidget';
+// Edition dashboard widgets — empty stubs in the Core build.
+import { eeDashboardWidgets } from '@ee/dashboard-widgets';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { LuLayoutDashboard } from 'react-icons/lu';
 import { PageContainer } from '../../../shared/components/ui/PageContainer';
@@ -32,7 +33,7 @@ export const DashboardPage: React.FC = () => {
 
       <HitlQueueWidget />
 
-      <SecurityInterceptsWidget />
+      {eeDashboardWidgets.map((w, i) => <React.Fragment key={i}>{w}</React.Fragment>)}
 
       <RecentActivityWidget />
 
