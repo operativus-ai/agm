@@ -1,0 +1,22 @@
+# Gitleaks config for AGM Core.
+# The default ruleset applies; the allowlist below covers deliberate FAKE
+# credentials used as fixtures by the log-scrubbing / audit-scrubber / outbound
+# key-encryption tests, and the screenshot script's synthetic JWT. Anything
+# else that trips the scanner is a real finding — do not extend this list to
+# silence one without review.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Deliberate fake credentials in tests and fixtures"
+paths = [
+  '''agent-manager/src/test/.*''',
+  '''agent-manager/src/main/resources/db/changelog/changes/063-a2a-task-events-immutability\.sql''',
+  '''agent-manager-ui/screenshot-pages\.cjs''',
+  '''.*/target/.*''',
+  '''agent-manager/src/main/java/ai/operativus/agentmanager/core/model/RunOptions\.java''',
+]
+regexes = [
+  '''sk-(test|dummy|fake|leaked-se|JSON-MUST|live-MUST|live-abc1|live-dete|events-im)[A-Za-z0-9_\-]*''',
+  '''QUFBQUFBQUFB[A-Za-z0-9+/=]*''',
+]
