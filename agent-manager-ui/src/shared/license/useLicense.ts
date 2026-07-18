@@ -5,6 +5,8 @@ export interface LicenseInfo {
   edition: 'core' | 'enterprise';
   features: string[];
   expiresAt?: string;
+  /** Org-count ceiling enforced by the EE org registry; absent = unlimited. */
+  maxTenants?: number;
   issuedTo?: string;
 }
 
