@@ -82,12 +82,6 @@ export interface AgentConfig {
   agentTemplate?: string;
 }
 
-export interface DeveloperMetrics {
-  testabilityScore: number;
-  maintainabilityGrade: string;
-  evaluationCount: number;
-}
-
 export interface TopologyNode {
   id: string;
   label: string;
@@ -171,10 +165,6 @@ export interface KnowledgeUploadResponse {
   documentId: string;
   status: string;
   message: string;
-}
-
-export interface BulkActionResponse {
-  jobId: string;
 }
 
 export interface AgentSummary {

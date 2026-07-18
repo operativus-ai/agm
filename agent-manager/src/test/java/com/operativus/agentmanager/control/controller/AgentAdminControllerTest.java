@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.operativus.agentmanager.core.exception.BusinessValidationException;
 import com.operativus.agentmanager.core.exception.GlobalExceptionHandler;
 import com.operativus.agentmanager.core.exception.ResourceNotFoundException;
-import com.operativus.agentmanager.core.model.DeveloperMetricsDTO;
 import com.operativus.agentmanager.core.model.definitions.AgentDefinition;
 import com.operativus.agentmanager.core.registry.AgentAdminOperations;
 import org.junit.jupiter.api.Test;
@@ -61,15 +60,4 @@ public class AgentAdminControllerTest {
                 .andExpect(jsonPath("$.detail").value("Cannot delete agent with active runs"));
     }
 
-    @Test
-    void getDeveloperMetrics_ReturnsMetricsDTO() throws Exception {
-        DeveloperMetricsDTO metrics = new DeveloperMetricsDTO(100.0, "A", 10L);
-        Mockito.when(agentAdminService.getDeveloperMetrics("agent-1")).thenReturn(metrics);
-
-        mockMvc.perform(get("/api/admin/agents/agent-1/dx-metrics")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.testabilityScore").value(100.0))
-                .andExpect(jsonPath("$.maintainabilityGrade").value("A"));
-    }
 }

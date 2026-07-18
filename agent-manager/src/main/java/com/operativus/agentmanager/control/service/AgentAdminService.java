@@ -12,9 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.operativus.agentmanager.core.entity.AgentAuditEntity;
 import com.operativus.agentmanager.core.entity.AgentRun;
 import com.operativus.agentmanager.control.repository.AgentAuditRepository;
-import com.operativus.agentmanager.control.repository.EvaluationRepository;
 import com.operativus.agentmanager.control.repository.RunRepository;
-import com.operativus.agentmanager.core.model.DeveloperMetricsDTO;
 import com.operativus.agentmanager.control.repository.TransitionEdgeRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -52,16 +50,14 @@ public class AgentAdminService implements AgentAdminOperations {
     private final AgentRepository agentRepository;
     private final RunRepository runRepository;
     private final AgentAuditRepository auditRepository;
-    private final EvaluationRepository evaluationRepository;
     private final TransitionEdgeRepository transitionEdgeRepository;
     private final ObjectMapper objectMapper;
     private final AgentOperations agentOperations;
 
-    public AgentAdminService(AgentRepository agentRepository, RunRepository runRepository, AgentAuditRepository auditRepository, EvaluationRepository evaluationRepository, TransitionEdgeRepository transitionEdgeRepository, ObjectMapper objectMapper, AgentOperations agentOperations) {
+    public AgentAdminService(AgentRepository agentRepository, RunRepository runRepository, AgentAuditRepository auditRepository, TransitionEdgeRepository transitionEdgeRepository, ObjectMapper objectMapper, AgentOperations agentOperations) {
         this.agentRepository = agentRepository;
         this.runRepository = runRepository;
         this.auditRepository = auditRepository;
-        this.evaluationRepository = evaluationRepository;
         this.transitionEdgeRepository = transitionEdgeRepository;
         this.objectMapper = objectMapper;
         this.agentOperations = agentOperations;
@@ -398,35 +394,6 @@ public class AgentAdminService implements AgentAdminOperations {
                 .collect(java.util.stream.Collectors.toList());
         
         return new com.operativus.agentmanager.core.model.TopologyDTO(nodes, edges, transitionConstraints);
-    }
-
-    /**
-     * @summary Generates developer experience (DX) and performance metrics for a specific agent.
-     * @logic Calculates a testability score based on attached Evaluation records and computes a maintainability grade based on tools and configuration complexity.
-     */
-    @Transactional(readOnly = true)
-    @PreAuthorize("hasPermission(#id, 'AgentDefinition', 'read')")
-    public DeveloperMetricsDTO getDeveloperMetrics(String id) {
-        AgentEntity entity = agentRepository.findByIdAndOrgId(id, callerOrgId())
-                .orElseThrow(() -> new ResourceNotFoundException("Agent", id));
-
-        long evaluationCount = evaluationRepository.findByAgentId(id).size();
-        
-        // Calculate Testability Score based on evaluation coverage
-        double testabilityScore = Math.min(100.0, evaluationCount * 10.0);
-        
-        // Calculate Maintainability Grade based on configuration complexity
-        int complexityFactor = 0;
-        if (entity.getTools() != null) complexityFactor += entity.getTools().size();
-        if (entity.getConfiguration() != null) complexityFactor += entity.getConfiguration().size();
-        
-        String maintainabilityGrade = "A";
-        if (complexityFactor > 20) maintainabilityGrade = "F";
-        else if (complexityFactor > 15) maintainabilityGrade = "D";
-        else if (complexityFactor > 10) maintainabilityGrade = "C";
-        else if (complexityFactor > 5) maintainabilityGrade = "B";
-
-        return new DeveloperMetricsDTO(testabilityScore, maintainabilityGrade, evaluationCount);
     }
 
     /**

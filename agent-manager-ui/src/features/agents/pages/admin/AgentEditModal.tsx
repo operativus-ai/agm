@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import type { AgentConfig, AgentRun, PaginatedResponse, AgentAudit, AgentTopology, DeveloperMetrics } from '../../../../shared/types/api';
+import type { AgentConfig, AgentRun, PaginatedResponse, AgentAudit, AgentTopology } from '../../../../shared/types/api';
 import { AgentAdminApi } from '../../api/adminApi';
+import { EeAgentDxMetricsPanel } from '@ee/agent-admin';
 import { AgentsApi } from '../../api/agents-api';
 import { KnowledgeBasesApi } from '../../../knowledge/api/knowledge-bases-api';
 import type { KnowledgeBase } from '../../../../shared/types/api';
@@ -94,7 +95,6 @@ export const AgentEditModal: React.FC<AgentEditModalProps> = ({ isOpen, onClose,
     const [auditPage, setAuditPage] = useState<PaginatedResponse<AgentAudit> | null>(null);
     const [topology, setTopology] = useState<AgentTopology | null>(null);
     const [logs, setLogs] = useState<string[]>([]);
-    const [metrics, setMetrics] = useState<DeveloperMetrics | null>(null);
     const [versions, setVersions] = useState<AgentConfig[] | null>(null);
     const [rollingBackId, setRollingBackId] = useState<string | null>(null);
     const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
@@ -147,9 +147,6 @@ export const AgentEditModal: React.FC<AgentEditModalProps> = ({ isOpen, onClose,
                 } else if (activeTab === 'topology' && !topology) {
                     const data = await AgentAdminApi.getAgentTopology(agent.agentId);
                     setTopology(data);
-                } else if (activeTab === 'dx' && !metrics) {
-                    const data = await AgentAdminApi.getAgentDxMetrics(agent.agentId);
-                    setMetrics(data);
                 } else if (activeTab === 'versions' && versions === null) {
                     const data = await AgentAdminApi.getAgentVersions(agent.agentId);
                     setVersions(data);
@@ -519,33 +516,9 @@ export const AgentEditModal: React.FC<AgentEditModalProps> = ({ isOpen, onClose,
                         </button>
                     </div>
                     
-                    {loadingData ? (
-                        <div className="flex justify-center"><span className="loading loading-spinner text-info"></span></div>
-                    ) : metrics ? (
-                        <div className="stats shadow">
-                            <div className="stat">
-                                <div className="stat-title">Testability Score</div>
-                                <div className={`stat-value ${metrics.testabilityScore > 80 ? 'text-success' : metrics.testabilityScore > 50 ? 'text-warning' : 'text-error'}`}>
-                                    {metrics.testabilityScore}%
-                                </div>
-                                <div className="stat-desc">Based on evaluation coverage</div>
-                            </div>
-                            
-                            <div className="stat">
-                                <div className="stat-title">Maintainability Grade</div>
-                                <div className="stat-value text-info">{metrics.maintainabilityGrade}</div>
-                                <div className="stat-desc">Based on config complexity</div>
-                            </div>
-                            
-                            <div className="stat">
-                                <div className="stat-title">Evaluations</div>
-                                <div className="stat-value">{metrics.evaluationCount}</div>
-                                <div className="stat-desc">Total test runs recorded</div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="alert alert-info">Metrics not available</div>
-                    )}
+                    {EeAgentDxMetricsPanel && agent ? (
+                        <EeAgentDxMetricsPanel agentId={agent.agentId} />
+                    ) : null}
                     
                     <div className="divider">Ownership & Support</div>
                     

@@ -12,7 +12,8 @@
       "@ee/routes": ["./src/features-ee-stub/routes.tsx"],
       "@ee/nav": ["./src/features-ee-stub/nav.ts"],
       "@ee/observability-tabs": ["./src/features-ee-stub/observabilityTabs.ts"],
-      "@ee/dashboard-widgets": ["./src/features-ee-stub/dashboardWidgets.tsx"]
+      "@ee/dashboard-widgets": ["./src/features-ee-stub/dashboardWidgets.tsx"],
+      "@ee/agent-admin": ["./src/features-ee-stub/agentAdmin.tsx"]
     },
 
     /* Bundler mode */
