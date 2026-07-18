@@ -3,7 +3,6 @@ package com.operativus.agentmanager.integration.crosscutting;
 import com.operativus.agentmanager.control.repository.AgenticMemoryOutboxRepository;
 import com.operativus.agentmanager.control.repository.AgenticMemoryRepository;
 import com.operativus.agentmanager.control.repository.AgentAuditRepository;
-import com.operativus.agentmanager.control.repository.AlertEventRepository;
 import com.operativus.agentmanager.control.repository.ErasureRequestRepository;
 import com.operativus.agentmanager.control.repository.GlobalSettingRepository;
 import com.operativus.agentmanager.control.repository.RunRepository;
@@ -16,7 +15,6 @@ import com.operativus.agentmanager.core.entity.AgentAuditEntity;
 import com.operativus.agentmanager.core.entity.AgentRun;
 import com.operativus.agentmanager.core.entity.AgentSession;
 import com.operativus.agentmanager.core.entity.AgenticMemoryEntity;
-import com.operativus.agentmanager.core.entity.AlertEvent;
 import com.operativus.agentmanager.core.entity.ErasureRequest;
 import com.operativus.agentmanager.core.entity.GlobalSetting;
 import com.operativus.agentmanager.core.model.enums.RunStatus;
@@ -71,7 +69,6 @@ public class RetentionErasureRuntimeTest extends BaseIntegrationTest {
 
     @Autowired private SessionRepository sessionRepository;
     @Autowired private RunRepository runRepository;
-    @Autowired private AlertEventRepository alertEventRepository;
     @Autowired private AgenticMemoryRepository memoryRepository;
     @Autowired private AgenticMemoryOutboxRepository outboxRepository;
     @Autowired private AgentAuditRepository auditRepository;
@@ -127,18 +124,18 @@ public class RetentionErasureRuntimeTest extends BaseIntegrationTest {
         LocalDateTime veryOld = LocalDateTime.now().minusDays(60);
         LocalDateTime fresh = LocalDateTime.now().minusDays(5);
 
-        AlertEvent oldAcked = persistAlertEvent("ae-old-acked-" + UUID.randomUUID(), veryOld, true);
-        AlertEvent oldUnacked = persistAlertEvent("ae-old-unacked-" + UUID.randomUUID(), veryOld, false);
-        AlertEvent freshAcked = persistAlertEvent("ae-fresh-acked-" + UUID.randomUUID(), fresh, true);
+        String oldAcked = persistAlertEvent("ae-old-acked-" + UUID.randomUUID(), veryOld, true);
+        String oldUnacked = persistAlertEvent("ae-old-unacked-" + UUID.randomUUID(), veryOld, false);
+        String freshAcked = persistAlertEvent("ae-fresh-acked-" + UUID.randomUUID(), fresh, true);
 
         Map<String, Integer> summary = retention.enforceRetentionPolicies();
 
         assertEquals(1, summary.get("alertEvents"),
                 "only the old+acknowledged alert should be purged — old+unacked is preserved as incident trail");
-        assertFalse(alertEventRepository.existsById(oldAcked.getId()), "old acked alert must be deleted");
-        assertTrue(alertEventRepository.existsById(oldUnacked.getId()),
+        assertFalse(alertEventExists(oldAcked), "old acked alert must be deleted");
+        assertTrue(alertEventExists(oldUnacked),
                 "old UNacked alert must survive (unacknowledged events are never auto-purged)");
-        assertTrue(alertEventRepository.existsById(freshAcked.getId()), "fresh acked alert must survive");
+        assertTrue(alertEventExists(freshAcked), "fresh acked alert must survive");
     }
 
     // §27.7 case 4 — DB-backed retention-days setting overrides the application.properties
@@ -307,7 +304,9 @@ public class RetentionErasureRuntimeTest extends BaseIntegrationTest {
         return sessionRepository.findById(id).orElseThrow();
     }
 
-    private AlertEvent persistAlertEvent(String id, LocalDateTime firedAt, boolean acknowledged) {
+    private String persistAlertEvent(String id, LocalDateTime firedAt, boolean acknowledged) {
+        // Seeded via SQL — the AlertEvent entity moved to the enterprise artifact, but the
+        // table (changeset 009) + the retention sweep stay Core.
         // alert_events.rule_id has an FK to alert_rules(id); seed a parent row idempotently.
         jdbc.update("""
                 INSERT INTO alert_rules (id, name, metric_name, condition, threshold,
@@ -315,10 +314,16 @@ public class RetentionErasureRuntimeTest extends BaseIntegrationTest {
                 VALUES ('rule-t055', 't055 rule', 'metric.t055', 'GT', 1.0, 60, 'INFO', true, now(), now())
                 ON CONFLICT (id) DO NOTHING
                 """);
-        AlertEvent e = new AlertEvent(id, "rule-t055", 1.0, "t055 seeded", "INFO");
-        e.setFiredAt(firedAt);
-        e.setAcknowledged(acknowledged);
-        return alertEventRepository.saveAndFlush(e);
+        jdbc.update("""
+                INSERT INTO alert_events (id, rule_id, metric_value, message, severity, acknowledged, fired_at)
+                VALUES (?, 'rule-t055', 1.0, 't055 seeded', 'INFO', ?, ?)
+                """, id, acknowledged, java.sql.Timestamp.valueOf(firedAt));
+        return id;
+    }
+
+    private boolean alertEventExists(String id) {
+        Integer n = jdbc.queryForObject("SELECT count(*) FROM alert_events WHERE id = ?", Integer.class, id);
+        return n != null && n > 0;
     }
 
     private void persistGlobalSetting(String key, String value) {

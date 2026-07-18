@@ -1,7 +1,6 @@
 package com.operativus.agentmanager.control.service;
 
 import com.operativus.agentmanager.control.repository.AgentAuditRepository;
-import com.operativus.agentmanager.control.repository.AlertEventRepository;
 import com.operativus.agentmanager.control.repository.GlobalSettingRepository;
 import com.operativus.agentmanager.control.repository.RunRepository;
 import com.operativus.agentmanager.control.repository.SessionRepository;
@@ -31,7 +30,6 @@ class DataRetentionServiceTest {
     @Mock private SessionRepository sessionRepository;
     @Mock private RunRepository runRepository;
     @Mock private AgentAuditRepository auditRepository;
-    @Mock private AlertEventRepository alertEventRepository;
     @Mock private GlobalSettingRepository globalSettingRepository;
     @Mock private JdbcTemplate jdbcTemplate;
 
@@ -39,7 +37,7 @@ class DataRetentionServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new DataRetentionService(sessionRepository, runRepository, auditRepository, alertEventRepository, globalSettingRepository, jdbcTemplate);
+        service = new DataRetentionService(sessionRepository, runRepository, auditRepository, globalSettingRepository, jdbcTemplate);
         ReflectionTestUtils.setField(service, "sessionRetentionDays", 90);
         ReflectionTestUtils.setField(service, "runRetentionDays", 180);
         ReflectionTestUtils.setField(service, "auditRetentionDays", 365);
@@ -58,7 +56,6 @@ class DataRetentionServiceTest {
         AgentSession session = mock(AgentSession.class);
         when(session.getUpdatedAt()).thenReturn(LocalDateTime.now().minusDays(60));
         when(sessionRepository.findAll()).thenReturn(List.of(session));
-        when(alertEventRepository.findAll()).thenReturn(List.of());
 
         service.enforceRetentionPolicies();
 
@@ -75,7 +72,6 @@ class DataRetentionServiceTest {
         AgentSession session = mock(AgentSession.class);
         when(session.getUpdatedAt()).thenReturn(LocalDateTime.now().minusDays(60));
         when(sessionRepository.findAll()).thenReturn(List.of(session));
-        when(alertEventRepository.findAll()).thenReturn(List.of());
 
         service.enforceRetentionPolicies();
 
@@ -86,7 +82,6 @@ class DataRetentionServiceTest {
     void allFourRetentionKeysAreReadFromDb() {
         when(globalSettingRepository.findById(anyString())).thenReturn(Optional.empty());
         when(sessionRepository.findAll()).thenReturn(List.of());
-        when(alertEventRepository.findAll()).thenReturn(List.of());
 
         service.enforceRetentionPolicies();
 
@@ -100,7 +95,6 @@ class DataRetentionServiceTest {
     void agentRunEventsAndOrchestrationDecisions_PurgedOnAuditWindow() {
         when(globalSettingRepository.findById(anyString())).thenReturn(Optional.empty());
         when(sessionRepository.findAll()).thenReturn(List.of());
-        when(alertEventRepository.findAll()).thenReturn(List.of());
 
         service.enforceRetentionPolicies();
 

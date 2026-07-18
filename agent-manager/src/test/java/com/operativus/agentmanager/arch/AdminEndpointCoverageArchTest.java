@@ -114,14 +114,6 @@ public class AdminEndpointCoverageArchTest {
             // gated by a different SpEL expression; they're not flagged by ADMIN_GATE.)
 
             // === Other live admin-gated endpoints — TODO: each needs focused authz test ===
-            "com.operativus.agentmanager.control.controller.AlertingController#acknowledgeAlert",                            // matrix + focused: AlertingAdminAuthzRuntimeTest (#1044 added to ADMIN_ENDPOINTS)
-            "com.operativus.agentmanager.control.controller.AlertingController#createRule",                                  // matrix + focused: AlertingAdminAuthzRuntimeTest (#1044 added to ADMIN_ENDPOINTS)
-            "com.operativus.agentmanager.control.controller.AlertingController#deleteRule",                                  // matrix + focused: AlertingAdminAuthzRuntimeTest (#1044 added to ADMIN_ENDPOINTS)
-            "com.operativus.agentmanager.control.controller.AlertingController#updateRule",                                  // matrix + focused: AlertingAdminAuthzRuntimeTest (#1044 added to ADMIN_ENDPOINTS)
-            "com.operativus.agentmanager.control.controller.AlertIntegrationController#create",                              // matrix + focused: AlertIntegrationControllerRbacRuntimeTest (#1044 added to ADMIN_ENDPOINTS)
-            "com.operativus.agentmanager.control.controller.AlertIntegrationController#delete",                              // matrix + focused: AlertIntegrationControllerRbacRuntimeTest (#1044 added to ADMIN_ENDPOINTS)
-            "com.operativus.agentmanager.control.controller.AlertIntegrationController#testFire",                            // matrix + focused: AlertingAdminAuthzRuntimeTest (#1044 added to ADMIN_ENDPOINTS)
-            "com.operativus.agentmanager.control.controller.AlertIntegrationController#update",                              // matrix + focused: AlertIntegrationControllerRbacRuntimeTest (#1044 added to ADMIN_ENDPOINTS)
             "com.operativus.agentmanager.control.controller.ApprovalsController#bulkResolve",                                // focused: MiscAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.ApprovalsController#resolveApproval",                            // focused: MiscAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.ApprovalsController#decide",                                     // focused: HumanReviewDecideEndpointRuntimeTest (REQ-HR-5)

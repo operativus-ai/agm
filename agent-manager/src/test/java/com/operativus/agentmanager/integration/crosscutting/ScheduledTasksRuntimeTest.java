@@ -33,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   surface. Pins the ten {@code @Scheduled} beans invoked by {@link SchedulerTestSupport}:
  *   {@code ApprovalService.checkApprovalSla / expireStaleApprovals},
  *   {@code DataRetentionService.enforceRetentionPolicies},
- *   {@code AlertingService.evaluateRules},
  *   {@code ScheduleExecutionPoller.evaluateSchedules},
  *   {@code PersistentJobQueueService.processQueue},
  *   {@code PeerHealthMonitor.checkPeerHealth},
@@ -273,7 +272,6 @@ public class ScheduledTasksRuntimeTest extends BaseIntegrationTest {
                 SchedulerTestSupport::tickApprovalSlaCheck,
                 SchedulerTestSupport::tickApprovalCleanup,
                 SchedulerTestSupport::tickDataRetention,
-                SchedulerTestSupport::tickAlerting,
                 SchedulerTestSupport::tickSchedulePoll,
                 SchedulerTestSupport::tickJobQueue,
                 SchedulerTestSupport::tickPeerHealth,

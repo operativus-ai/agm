@@ -2,13 +2,11 @@ package com.operativus.agentmanager.integration.config;
 
 import com.operativus.agentmanager.control.repository.AgentAuditRepository;
 import com.operativus.agentmanager.control.repository.AgenticMemoryRepository;
-import com.operativus.agentmanager.control.repository.AlertEventRepository;
 import com.operativus.agentmanager.control.repository.GlobalSettingRepository;
 import com.operativus.agentmanager.control.repository.RunRepository;
 import com.operativus.agentmanager.control.repository.SessionRepository;
 import com.operativus.agentmanager.core.entity.AgentAuditEntity;
 import com.operativus.agentmanager.core.entity.AgenticMemoryEntity;
-import com.operativus.agentmanager.core.entity.AlertEvent;
 import com.operativus.agentmanager.core.entity.GlobalSetting;
 import com.operativus.agentmanager.integration.BaseIntegrationTest;
 import com.operativus.agentmanager.integration.support.FakeChatModelConfig;
@@ -111,7 +109,6 @@ public class ConfigRuntimeTest extends BaseIntegrationTest {
     @Autowired private RunRepository runRepository;
     @Autowired private AgenticMemoryRepository memoryRepository;
     @Autowired private AgentAuditRepository auditRepository;
-    @Autowired private AlertEventRepository alertEventRepository;
     @Autowired private GlobalSettingRepository globalSettingRepository;
     @Autowired private SchedulerTestSupport scheduler;
 
@@ -143,17 +140,13 @@ public class ConfigRuntimeTest extends BaseIntegrationTest {
         seedAlertRule(ruleId);
 
         // Acknowledged alert event at -45d — past the 30d alerts-days window.
-        AlertEvent stalePurgeable = new AlertEvent(
-                "evt-stale-" + shortUuid(), ruleId, 1.0, "stale ack", "INFO");
-        stalePurgeable.setAcknowledged(true);
-        stalePurgeable.setFiredAt(LocalDateTime.now().minusDays(45));
-        alertEventRepository.save(stalePurgeable);
+        // Seeded via SQL: the AlertEvent entity moved to the enterprise artifact,
+        // but the table (changeset 009) + the retention sweep stay Core.
+        String stalePurgeableId = "evt-stale-" + shortUuid();
+        seedAlertEvent(stalePurgeableId, ruleId, true, 45);
         // Unacknowledged alert event at -45d — past the window, but NOT acknowledged.
-        AlertEvent staleUnacked = new AlertEvent(
-                "evt-unack-" + shortUuid(), ruleId, 2.0, "stale unack", "WARNING");
-        staleUnacked.setAcknowledged(false);
-        staleUnacked.setFiredAt(LocalDateTime.now().minusDays(45));
-        alertEventRepository.save(staleUnacked);
+        String staleUnackedId = "evt-unack-" + shortUuid();
+        seedAlertEvent(staleUnackedId, ruleId, false, 45);
 
         // Run at -200d — past the 180d runs-days setting; purged by the retention sweep.
         String staleRunId = seedRun(victim, LocalDateTime.now().minusDays(200));
@@ -173,7 +166,7 @@ public class ConfigRuntimeTest extends BaseIntegrationTest {
         // Positive: stale session + acked-stale alert are purged.
         assertTrue(sessionRepository.findById(staleSessionId).isEmpty(),
                 "session with updated_at past sessions-days must be purged on tickDataRetention");
-        assertTrue(alertEventRepository.findById(stalePurgeable.getId()).isEmpty(),
+        assertEquals(0, alertEventCount(stalePurgeableId),
                 "acknowledged alert_event past alerts-days must be purged on tickDataRetention");
 
         // Fresh session survives (sanity).
@@ -189,8 +182,8 @@ public class ConfigRuntimeTest extends BaseIntegrationTest {
                 "audit row past app.retention.audit-days must be purged on tickDataRetention (bypass flag on the sweep transaction lets the DELETE pass trg_agent_audits_immutable)");
 
         // Gap pin: UNACKNOWLEDGED alert_event survives even past the window.
-        assertTrue(alertEventRepository.findById(staleUnacked.getId()).isPresent(),
-                "UNACKNOWLEDGED alert_event survives even past the window — DataRetentionService filters with isAcknowledged() && firedAt < cutoff (service line 85). Removal here would indicate the acknowledged-only guard was loosened — flip the assertion and the class Javadoc.");
+        assertEquals(1, alertEventCount(staleUnackedId),
+                "UNACKNOWLEDGED alert_event survives even past the window — the retention sweep deletes only acknowledged=true rows. Removal here would indicate the acknowledged-only guard was loosened — flip the assertion and the class Javadoc.");
     }
 
     // T048 Case (b) — Matrix §27.7 (retention) + §26 case 4 (global_settings override is
@@ -525,6 +518,18 @@ public class ConfigRuntimeTest extends BaseIntegrationTest {
      * Seeds an agents row so FK-bound audit/other tables can reference it. Same pattern
      * as AuditLogsRuntimeTest#seedAgentRow. ON CONFLICT so the helper is idempotent.
      */
+    private void seedAlertEvent(String id, String ruleId, boolean acknowledged, int daysAgo) {
+        jdbc.update("""
+                INSERT INTO alert_events (id, rule_id, metric_value, message, severity, acknowledged, fired_at)
+                VALUES (?, ?, 1.0, 'retention seed', 'INFO', ?, ?)
+                """, id, ruleId, acknowledged, java.sql.Timestamp.valueOf(LocalDateTime.now().minusDays(daysAgo)));
+    }
+
+    private int alertEventCount(String id) {
+        Integer n = jdbc.queryForObject("SELECT count(*) FROM alert_events WHERE id = ?", Integer.class, id);
+        return n == null ? 0 : n;
+    }
+
     private void seedAlertRule(String ruleId) {
         jdbc.update("""
                 INSERT INTO alert_rules (id, name, metric_name, condition, threshold, window_seconds, severity, enabled)

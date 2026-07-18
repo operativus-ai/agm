@@ -4,7 +4,6 @@ import { LuActivity } from 'react-icons/lu';
 import { PageHeader } from '../../../shared/components/ui/PageHeader';
 import { PageContainer } from '../../../shared/components/ui/PageContainer';
 import { Tabs } from '../../../shared/components/ui/Tabs';
-import { AlertEventHistoryPanel } from '../components/AlertEventHistoryPanel';
 import { BackgroundJobMonitorTab } from '../components/BackgroundJobMonitorTab';
 import { EvaluationMatrix } from '../components/EvaluationMatrix';
 import { OtlpSettings } from '../components/OtlpSettings';
@@ -20,7 +19,6 @@ type GroupId = 'operations' | 'analytics';
 const OPERATIONS_TABS: TabDef[] = [
     { slug: 'system-health', label: 'System Health', content: <OtlpSettings /> },
     { slug: 'live-events', label: 'Live Events', content: <LiveEventsTab /> },
-    { slug: 'alerts-history', label: 'Alerts History', content: <AlertEventHistoryPanel /> },
     { slug: 'background-jobs', label: 'Background Jobs', content: <BackgroundJobMonitorTab /> },
     { slug: 'diagnostics', label: 'Diagnostics', content: <JvmDiagnosticsPanel /> },
 ];
