@@ -31,7 +31,7 @@ internet  │  VM                                                  │
 ## First-time deploy
 
 ```bash
-git clone https://github.com/sesker69/agent-manager.git
+git clone https://github.com/operativus-ai/agm.git
 cd agent-manager
 cp deploy/.env.prod.example deploy/.env.prod
 
@@ -82,13 +82,13 @@ The stack is **four containers, two of which are our images** (`web` = React SPA
 | Backend Java code, `pom.xml`, `application*.properties` | **`app`** image | `docker compose ... up -d --build app` |
 | **Liquibase changelog** (DB schema) | **`app`** image — migrations run on the next app boot; no separate migrate step | `docker compose ... up -d --build app` |
 | React FE code, `package.json`, `vite.config.ts` | **`web`** image | `docker compose ... up -d --build web` |
-| **`Caddyfile`** (routing / security headers / TLS) | **`web`** image — the Caddyfile is *baked into* `agm-web`, not mounted, so a rebuild is required | `docker compose ... up -d --build web` |
+| **`Caddyfile`** (routing / security headers / TLS) | **`web`** image — the Caddyfile is *baked into* `agm-core-web`, not mounted, so a rebuild is required | `docker compose ... up -d --build web` |
 | `deploy/.env.prod` (secrets / config values) | **nothing** — just recreate containers | `docker compose ... up -d` (no `--build`) |
 | `deploy/docker-compose.prod.yml` (ports, env, healthchecks) | **nothing** — recreate | `docker compose ... up -d` |
 | Postgres / Redis image version bump | re-pull the stock image | `docker compose ... pull postgres redis && docker compose ... up -d` |
 | Firecrawl overlay (see below) | re-pull the Firecrawl images | `docker compose ... -f deploy/docker-compose.firecrawl.yml pull && ... up -d` |
 
-> On the CI **pull-based** deploy (`release.yml` → `deploy-pull.sh`), you don't build on the box at all — CI builds `agm-app` + `agm-web` and the runner pulls the SHA-tagged images. The "rebuild" column above then maps to "which image CI rebuilt"; the box just `pull` + `up -d` via `IMAGE_TAG`.
+> On the CI **pull-based** deploy (`release.yml` → `deploy-pull.sh`), you don't build on the box at all — CI builds `agm-core-app` + `agm-core-web` and the runner pulls the SHA-tagged images. The "rebuild" column above then maps to "which image CI rebuilt"; the box just `pull` + `up -d` via `IMAGE_TAG`.
 
 ## Backups
 
