@@ -1,3 +1,4 @@
+import type { FeatureKey } from '../../shared/constants/feature-keys';
 import type { ReactNode } from 'react';
 import { HumanReviewQueue } from './components/HumanReviewQueue';
 
@@ -8,7 +9,7 @@ export interface ApprovalsTabDef {
    *  DataTable + selection state) lives in ApprovalsPage itself. */
   render?: () => ReactNode;
   /** Edition feature key — tab hidden when the license lacks it. */
-  featureKey?: string;
+  featureKey?: FeatureKey;
 }
 
 export const APPROVALS_TABS: ApprovalsTabDef[] = [

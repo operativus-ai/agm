@@ -1,3 +1,4 @@
+import type { FeatureKey } from '../constants/feature-keys';
 import type { IconType } from 'react-icons';
 import {
   LuLayoutDashboard, LuMessageSquare, LuBot, LuUsers, LuWaypoints,
@@ -13,8 +14,8 @@ export interface NavItem {
   icon: IconType;
   /** Minimum role required to see the item. Absent = visible to all authenticated users. */
   role?: 'ADMIN' | 'SUPER_ADMIN';
-  /** Edition feature key — reserved for the license gate (agm-core-oss-execution.md §5.2). */
-  featureKey?: string;
+  /** Edition feature key — item hidden unless the license includes it. */
+  featureKey?: FeatureKey;
 }
 
 export interface NavGroup {
