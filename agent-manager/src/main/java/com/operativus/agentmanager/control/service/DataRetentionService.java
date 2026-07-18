@@ -39,7 +39,6 @@ public class DataRetentionService {
     private final SessionRepository sessionRepository;
     private final RunRepository runRepository;
     private final AgentAuditRepository auditRepository;
-    private final AlertEventRepository alertEventRepository;
     private final GlobalSettingRepository globalSettingRepository;
     private final JdbcTemplate jdbcTemplate;
 
@@ -47,13 +46,11 @@ public class DataRetentionService {
             SessionRepository sessionRepository,
             RunRepository runRepository,
             AgentAuditRepository auditRepository,
-            AlertEventRepository alertEventRepository,
             GlobalSettingRepository globalSettingRepository,
             JdbcTemplate jdbcTemplate) {
         this.sessionRepository = sessionRepository;
         this.runRepository = runRepository;
         this.auditRepository = auditRepository;
-        this.alertEventRepository = alertEventRepository;
         this.globalSettingRepository = globalSettingRepository;
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -84,14 +81,13 @@ public class DataRetentionService {
         }
         purged.put("sessions", oldSessions.size());
 
-        // Purge old alert events (acknowledged only)
-        var oldAlerts = alertEventRepository.findAll().stream()
-                .filter(a -> a.isAcknowledged() && a.getFiredAt().isBefore(LocalDateTime.now().minusDays(effectiveAlertDays)))
-                .toList();
-        if (!oldAlerts.isEmpty()) {
-            alertEventRepository.deleteAll(oldAlerts);
-        }
-        purged.put("alertEvents", oldAlerts.size());
+        // Purge old alert events (acknowledged only). Plain SQL: the AlertEvent
+        // entity/repository live in the enterprise artifact, but the table is Core
+        // schema (changeset 009) and retention is a Core operator duty either way.
+        int purgedAlerts = jdbcTemplate.update(
+                "DELETE FROM alert_events WHERE acknowledged = true AND fired_at < ?",
+                LocalDateTime.now().minusDays(effectiveAlertDays));
+        purged.put("alertEvents", purgedAlerts);
 
         // Purge old agent runs. Order matters: reflection children first (fk_agent_reflections_run),
         // then nullify self-referencing parent_run_id pointers into the deletion set, then the runs

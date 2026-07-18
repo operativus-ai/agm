@@ -100,29 +100,6 @@ public class AdminEndpointAuthzRuntimeTest extends BaseIntegrationTest {
             "provider", "OPENAI",
             "model", "gpt-4o-mini");
 
-    // AlertRuleRequest validation: @NotBlank on name/metricName/condition/severity,
-    // @Pattern on condition (GT|GTE|LT|LTE|EQ) and severity (INFO|WARNING|CRITICAL),
-    // @PositiveOrZero on windowSeconds. Body must pass @Valid so the 403 case actually
-    // hits @PreAuthorize rather than a 400 from validation.
-    private static final Map<String, Object> ALERT_RULE_VALID_BODY = Map.of(
-            "name", "authz-matrix-probe-rule",
-            "metricName", "agent.runs.failed",
-            "condition", "GT",
-            "threshold", 0.0,
-            "windowSeconds", 60,
-            "severity", "WARNING",
-            "enabled", true);
-
-    // AlertIntegrationRequest validation: @NotBlank on name/type/endpointUrl,
-    // @Pattern on type (WEBHOOK|SLACK|PAGERDUTY). example.com is a public URL that
-    // passes SsrfGuard (which only blocks RFC-1918 + cloud-metadata targets per the
-    // AlertIntegrationController javadoc), so the bind reaches the @PreAuthorize check.
-    private static final Map<String, Object> ALERT_INTEGRATION_VALID_BODY = Map.of(
-            "name", "authz-matrix-probe-integration",
-            "type", "WEBHOOK",
-            "endpointUrl", "https://example.com/webhook",
-            "enabled", true);
-
     private static final List<EndpointSpec> ADMIN_ENDPOINTS = List.of(
             new EndpointSpec("/api/admin/retention/policies", HttpMethod.GET, null),
             new EndpointSpec("/api/admin/retention/purge", HttpMethod.POST, Map.of()),
@@ -155,30 +132,7 @@ public class AdminEndpointAuthzRuntimeTest extends BaseIntegrationTest {
             new EndpointSpec("/api/v1/provider-credentials/test", HttpMethod.POST, PROVIDER_CRED_TEST_VALID_BODY),
             // Live provider catalog passthrough — admin-only since it exposes provider-side
             // metadata and uses the org's ProviderCredential to call the provider API.
-            new EndpointSpec("/api/v1/models/catalog/OPENAI", HttpMethod.GET, null),
-            // Alert rule + alert-event admin surface (AlertingController). Reads
-            // (/api/alerts/rules, /api/alerts/events) are intentionally open to any
-            // authenticated tenant member with service-layer tenant scoping; only the
-            // write paths + the ack-alert action are admin-gated. Without these matrix
-            // entries, a regression that drops @PreAuthorize from any write would have
-            // gone unnoticed (the mass-assignment guard documented on AlertRuleRequest
-            // depends on the admin gate being live).
-            new EndpointSpec("/api/alerts/rules", HttpMethod.POST, ALERT_RULE_VALID_BODY),
-            new EndpointSpec("/api/alerts/rules/non-existent-rule-id", HttpMethod.PUT, ALERT_RULE_VALID_BODY),
-            new EndpointSpec("/api/alerts/rules/non-existent-rule-id", HttpMethod.DELETE, null),
-            new EndpointSpec("/api/alerts/events/non-existent-event-id/acknowledge",
-                    HttpMethod.POST, null),
-            // Alert integration admin surface (AlertIntegrationController). Same shape:
-            // GET list is open, writes + the operator-fired test-dispatch are admin.
-            // Test-fire is admin-gated specifically because it spends an outbound HTTP
-            // request and could be abused for an SSRF probe per the controller javadoc.
-            new EndpointSpec("/api/alerts/integrations", HttpMethod.POST, ALERT_INTEGRATION_VALID_BODY),
-            new EndpointSpec("/api/alerts/integrations/non-existent-integration-id",
-                    HttpMethod.PUT, ALERT_INTEGRATION_VALID_BODY),
-            new EndpointSpec("/api/alerts/integrations/non-existent-integration-id",
-                    HttpMethod.DELETE, null),
-            new EndpointSpec("/api/alerts/integrations/non-existent-integration-id/test",
-                    HttpMethod.POST, null));
+            new EndpointSpec("/api/v1/models/catalog/OPENAI", HttpMethod.GET, null));
 
     // Composio create/update bodies are minimally-valid so jakarta validation passes
     // and the request reaches the @PreAuthorize gate (otherwise a 400 would mask the

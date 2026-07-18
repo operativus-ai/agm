@@ -140,8 +140,6 @@ public class ControllerPreAuthorizeArchTest {
     private static final Map<String, Integer> MIXED_METHOD_AUTHZ_COUNT = new TreeMap<>(Map.ofEntries(
             // 4 of 5 endpoints gated after PR #1020 (was 1 of 5 — only /test). create/update/delete
             // are now @PreAuthorize("hasRole('ADMIN')"); list() remains open to tenant members.
-            Map.entry("AlertIntegrationController", 4),
-            Map.entry("AlertingController", 4),
             Map.entry("AuthController", 1),               // 1 of 4 — login/register/refresh are public per app.security.public-paths
             Map.entry("EvaluationController", 5),
             Map.entry("ExtensionController", 4),

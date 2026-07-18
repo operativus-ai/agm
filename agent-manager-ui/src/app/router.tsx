@@ -50,12 +50,9 @@ import { AuditLogPage } from '../features/auditlogs/pages/AuditLogPage';
 import { ComposioAdminPage } from '../features/composio/pages/ComposioAdminPage';
 import { RequireRole } from '../shared/components/RequireRole';
 import { RequireAnyRole } from '../shared/components/RequireAnyRole';
-import { AlertIntegrationsPage } from '../features/alerts/pages/AlertIntegrationsPage';
-import { AlertRulesPage } from '../features/alerts/pages/AlertRulesPage';
 import { SkillsPage } from '../features/skills/pages/SkillsPage';
 import { RunsPage } from '../features/runs/pages/RunsPage';
 import { RunDetailPage } from '../features/runs/pages/RunDetailPage';
-import { BudgetExceededPage } from '../features/alerts/pages/BudgetExceededPage';
 import { NotFoundPage } from '../features/errors/pages/NotFoundPage';
 
 const router = createBrowserRouter([
@@ -177,10 +174,7 @@ const router = createBrowserRouter([
       { path: 'admin/provider-credentials', element: <ProviderCredentialsPage />, handle: { title: 'Provider Credentials' } },
       { path: 'admin/agents', element: <AgentAdminDashboardPage />, handle: { title: 'Manage Agents' } },
       { path: 'admin/audit-logs', element: <AuditLogPage />, handle: { title: 'Audit Logs' } },
-      { path: 'admin/alert-integrations', element: <AlertIntegrationsPage />, handle: { title: 'Alert Integrations' } },
-      { path: 'admin/alert-rules', element: <AlertRulesPage />, handle: { title: 'Alert Rules' } },
       { path: 'admin/skills', element: <SkillsPage />, handle: { title: 'Skills' } },
-      { path: 'alerts/budget-exceeded', element: <BudgetExceededPage />, handle: { title: 'Budget Alerts' } },
       // Edition routes join the dashboard layout here; empty in the Core build.
       ...eeRoutes,
       { path: '*', element: <NotFoundPage />, handle: { title: 'Not Found' } },

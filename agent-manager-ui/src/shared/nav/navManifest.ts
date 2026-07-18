@@ -3,7 +3,7 @@ import {
   LuLayoutDashboard, LuMessageSquare, LuBot, LuUsers, LuWaypoints,
   LuBookOpen, LuDatabase, LuPlug, LuPackage, LuHistory, LuSquareCheck,
   LuCalendar, LuShield, LuActivity, LuNetwork, LuCpu, LuUserCog, LuClipboardList,
-  LuBell, LuBellRing, LuDollarSign, LuPuzzle, LuPlay,
+  LuPuzzle, LuPlay,
   LuChartBar, LuFlaskConical, LuShieldCheck, LuZap, LuKey, LuSparkles,
 } from 'react-icons/lu';
 
@@ -76,16 +76,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: '/observability', label: 'Observability', icon: LuActivity },
       { to: '/finops', label: 'FinOps & Gateway', icon: LuChartBar },
-    ],
-  },
-  {
-    key: 'alerts',
-    title: 'Alerts',
-    isTree: true,
-    items: [
-      { to: '/admin/alert-rules', label: 'Alert Rules', icon: LuBell },
-      { to: '/admin/alert-integrations', label: 'Alert Integrations', icon: LuBellRing },
-      { to: '/alerts/budget-exceeded', label: 'Budget Alerts', icon: LuDollarSign },
     ],
   },
   {

@@ -4,8 +4,6 @@ import com.operativus.agentmanager.compute.memory.EphemeralSwarmContext;
 import com.operativus.agentmanager.compute.memory.MemoryConsolidationWorker;
 import com.operativus.agentmanager.compute.service.BatchReasoningQueueService;
 import com.operativus.agentmanager.control.a2a.PeerHealthMonitor;
-import com.operativus.agentmanager.control.service.AlertIntegrationService;
-import com.operativus.agentmanager.control.service.AlertingService;
 import com.operativus.agentmanager.control.service.ApprovalService;
 import com.operativus.agentmanager.control.service.DataRetentionService;
 import com.operativus.agentmanager.control.service.PersistentJobQueueService;
@@ -37,8 +35,6 @@ public class SchedulerTestSupport {
 
     private final ApprovalService approvals;
     private final DataRetentionService retention;
-    private final AlertingService alerting;
-    private final AlertIntegrationService alertIntegrations;
     private final ScheduleExecutionPoller schedules;
     private final PersistentJobQueueService jobQueue;
     private final PeerHealthMonitor peerHealth;
@@ -48,8 +44,6 @@ public class SchedulerTestSupport {
 
     public SchedulerTestSupport(ApprovalService approvals,
                                 DataRetentionService retention,
-                                AlertingService alerting,
-                                AlertIntegrationService alertIntegrations,
                                 ScheduleExecutionPoller schedules,
                                 PersistentJobQueueService jobQueue,
                                 PeerHealthMonitor peerHealth,
@@ -58,8 +52,6 @@ public class SchedulerTestSupport {
                                 EphemeralSwarmContext swarm) {
         this.approvals = approvals;
         this.retention = retention;
-        this.alerting = alerting;
-        this.alertIntegrations = alertIntegrations;
         this.schedules = schedules;
         this.jobQueue = jobQueue;
         this.peerHealth = peerHealth;
@@ -78,14 +70,6 @@ public class SchedulerTestSupport {
 
     public void tickDataRetention() {
         retention.enforceRetentionPolicies();
-    }
-
-    public void tickAlerting() {
-        alerting.evaluateRules();
-    }
-
-    public void tickAlertRetry() {
-        alertIntegrations.redispatchPendingFailures();
     }
 
     public void tickSchedulePoll() {

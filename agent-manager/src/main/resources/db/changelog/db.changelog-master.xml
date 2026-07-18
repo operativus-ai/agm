@@ -61,7 +61,6 @@
     <include file="db/changelog/changes/017-user-admin-fields.sql" />
 
     <!-- 18. Alert Integrations: outbound webhook/Slack notification channels -->
-    <include file="db/changelog/changes/018-alert-integrations.sql" />
 
     <!-- 19. Knowledge content hash dedup: unique (content_hash, knowledge_base_id) partial index -->
     <include file="db/changelog/changes/019-knowledge-content-hash-dedup.sql" />
@@ -105,7 +104,6 @@
     <include file="db/changelog/changes/030-system-audits.sql" />
 
     <!-- 31. §25.3 alert_integrations retry state: retry_count, next_retry_at, pending_payload for webhook redispatch -->
-    <include file="db/changelog/changes/031-alert-integrations-retry.sql" />
 
     <!-- 32. Logging plan Pre-3: @Version column on agent_runs for JPA optimistic locking (R-2). -->
     <include file="db/changelog/changes/032-agent-runs-version.sql" />
@@ -182,7 +180,6 @@
          AlertingService scopes CRUD/list/acknowledge to caller's org; the @Scheduled
          evaluateRules() iterates all enabled rules across orgs (intentional — metrics
          are global) and stamps the rule's orgId on each new AlertEvent. -->
-    <include file="db/changelog/changes/046-alerts-tenant-isolation.sql" />
 
     <!-- §6 M-12 Phase 1: optional per-model RPM override. Nullable; null means
          "no per-model gate, fall through to global limits". Phase 2 wires
@@ -193,7 +190,6 @@
          OutboundApiKeyConverter. When set, AlertIntegrationService signs the request
          body and adds X-AGM-Signature + X-AGM-Timestamp headers so receivers can
          verify origin and prevent replay. -->
-    <include file="db/changelog/changes/048-alert-integrations-signing-secret.sql" />
 
     <!-- §9 MEM-2: per-team flag for member-memory isolation. When TRUE, orchestrators
          derive a per-member conversationId so each member's MessageChatMemoryAdvisor
@@ -306,7 +302,6 @@
          to every enabled integration regardless of org. Adds nullable org_id + two indexes.
          AlertIntegrationService now stamps orgId at create time and scopes all queries.
          AlertFiredEvent gains orgId so onAlertFired dispatches only to the firing org's integrations. -->
-    <include file="db/changelog/changes/067-alert-integrations-org-id.sql" />
 
     <!-- Housekeeping: drop orphan ui_components table left behind by #659 (which deleted
          ComponentsController + Component{Entity,Repository,DTO}). No production readers/writers
