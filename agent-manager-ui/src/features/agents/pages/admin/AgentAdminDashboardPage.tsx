@@ -4,8 +4,8 @@ import type { AgentConfig, PaginatedResponse } from '../../../../shared/types/ap
 import type { ColumnDef } from '@tanstack/react-table';
 import { AgentAdminApi } from '../../api/adminApi';
 import { AgentsApi } from '../../api/agents-api';
-import { JobsApi, TERMINAL_JOB_STATUSES } from '../../../../shared/api/jobs-api';
 import { AgentEditModal } from './AgentEditModal';
+import { useAgentBulk } from '@ee/agent-admin';
 import { buildAgentAdminColumns } from './agentAdminColumns';
 import { useAppDefaults } from '../../../../shared/hooks/useAppDefaults';
 import { PageHeader } from '../../../../shared/components/ui/PageHeader';
@@ -14,7 +14,7 @@ import { Button } from '../../../../shared/components/ui/Button';
 import { DataTable } from '../../../../shared/components/ui/DataTable';
 import {
     LuShieldCheck, LuPlus, LuUpload, LuTrash2, LuExternalLink,
-    LuToggleLeft, LuToggleRight, LuDownload, LuOctagonAlert,
+    LuOctagonAlert,
 } from 'react-icons/lu';
 import { incidentResponseApi } from '../../api/incidentResponseApi';
 import { PageContainer } from '../../../../shared/components/ui/PageContainer';
@@ -34,10 +34,6 @@ export const AgentAdminDashboardPage: React.FC = () => {
     // Pagination
     const PAGE_SIZE = 20;
     const [pageIndex, setPageIndex] = useState(0);
-
-    // Bulk selection
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const [bulkLoading, setBulkLoading] = useState(false);
 
     const loadAgents = async () => {
         try {
@@ -114,81 +110,6 @@ export const AgentAdminDashboardPage: React.FC = () => {
         }
     };
 
-    const toggleSelectAll = () => {
-        const allIds = agentsPage?.content.map(a => a.agentId) ?? [];
-        if (allIds.every(id => selectedIds.has(id))) {
-            setSelectedIds(new Set());
-        } else {
-            setSelectedIds(new Set(allIds));
-        }
-    };
-
-    const toggleSelectOne = (id: string) => {
-        setSelectedIds(prev => {
-            const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
-            return next;
-        });
-    };
-
-    const pollJob = async (jobId: string) => {
-        while (true) {
-            const job = await JobsApi.getJobStatus(jobId);
-            if (TERMINAL_JOB_STATUSES.includes(job.status)) return job;
-            await new Promise(resolve => setTimeout(resolve, 3000));
-        }
-    };
-
-    const handleBulkAction = async (action: 'ENABLE' | 'DISABLE' | 'DELETE') => {
-        if (selectedIds.size === 0) return;
-        const ids = Array.from(selectedIds);
-        if (action === 'DELETE' && !confirm(`Delete ${ids.length} agent(s)? This cannot be undone.`)) return;
-        try {
-            setBulkLoading(true);
-            const { jobId } = await AgentAdminApi.bulkAction(ids, action);
-            showMessage(`${action} queued for ${ids.length} agent(s)…`, 'info');
-            const job = await pollJob(jobId);
-            if (job.status === 'COMPLETED') {
-                showMessage(`${action}: ${ids.length} agent(s) affected`, 'success');
-                setSelectedIds(new Set());
-                await loadAgents();
-            } else {
-                showMessage(`Bulk ${action.toLowerCase()} failed: ${job.errorMessage ?? 'unknown error'}`, 'error');
-            }
-        } catch (err) {
-            showMessage(`Bulk ${action.toLowerCase()} failed`, 'error');
-        } finally {
-            setBulkLoading(false);
-        }
-    };
-
-    const handleBulkExport = async () => {
-        if (selectedIds.size === 0) return;
-        try {
-            setBulkLoading(true);
-            const { jobId } = await AgentAdminApi.bulkExport(Array.from(selectedIds));
-            showMessage('Export queued…', 'info');
-            const job = await pollJob(jobId);
-            if (job.status === 'COMPLETED' && job.result) {
-                const agents = JSON.parse(job.result);
-                const blob = new Blob([JSON.stringify(agents, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `agents-export-${Date.now()}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-                showMessage(`Exported ${Array.isArray(agents) ? agents.length : '?'} agent(s)`, 'success');
-            } else {
-                showMessage(`Export failed: ${job.errorMessage ?? 'unknown error'}`, 'error');
-            }
-        } catch (err) {
-            showMessage('Bulk export failed', 'error');
-        } finally {
-            setBulkLoading(false);
-        }
-    };
-
     const handleLoadKnowledge = async (agentId: string) => {
         try {
             const { jobId } = await AgentsApi.loadKnowledge(agentId);
@@ -235,23 +156,25 @@ export const AgentAdminDashboardPage: React.FC = () => {
         }
     };
 
-    const allPageIds = agentsPage?.content.map(a => a.agentId) ?? [];
-    const allSelected = allPageIds.length > 0 && allPageIds.every(id => selectedIds.has(id));
+    const bulk = useAgentBulk({
+        agents: agentsPage?.content ?? [],
+        refresh: loadAgents,
+        showMessage,
+    });
 
     // ── Column Definitions ──────────────────────────────────────
     const columns = useMemo<ColumnDef<AgentConfig, unknown>[]>(
-        () => buildAgentAdminColumns({
-            allSelected,
-            selectedIds,
-            onToggleSelectAll: toggleSelectAll,
-            onToggleSelectOne: toggleSelectOne,
-            onEdit: handleEditClick,
-            onLoadKnowledge: handleLoadKnowledge,
-            onQuarantine: handleQuarantine,
-            onUnquarantine: handleUnquarantine,
-        }),
+        () => {
+            const base = buildAgentAdminColumns({
+                onEdit: handleEditClick,
+                onLoadKnowledge: handleLoadKnowledge,
+                onQuarantine: handleQuarantine,
+                onUnquarantine: handleUnquarantine,
+            });
+            return bulk.selectionColumn ? [bulk.selectionColumn, ...base] : base;
+        },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [selectedIds, allSelected],
+        [bulk.selectionColumn],
     );
 
     return (
@@ -305,23 +228,7 @@ export const AgentAdminDashboardPage: React.FC = () => {
                 }
             />
 
-            {selectedIds.size > 0 && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-obsidian-elevated border border-obsidian-stroke rounded-md">
-                    <span className="text-xs text-(--theme-muted) font-mono mr-1">{selectedIds.size} selected</span>
-                    <Button size="sm" variant="ghost" className="gap-1.5 text-success" onClick={() => handleBulkAction('ENABLE')} disabled={bulkLoading}>
-                        <LuToggleRight className="w-3.5 h-3.5" /> Enable
-                    </Button>
-                    <Button size="sm" variant="ghost" className="gap-1.5 text-warning" onClick={() => handleBulkAction('DISABLE')} disabled={bulkLoading}>
-                        <LuToggleLeft className="w-3.5 h-3.5" /> Disable
-                    </Button>
-                    <Button size="sm" variant="ghost" className="gap-1.5" onClick={handleBulkExport} disabled={bulkLoading}>
-                        <LuDownload className="w-3.5 h-3.5" /> Export
-                    </Button>
-                    <Button size="sm" variant="ghost" className="gap-1.5 text-error" onClick={() => handleBulkAction('DELETE')} disabled={bulkLoading}>
-                        <LuTrash2 className="w-3.5 h-3.5" /> Delete
-                    </Button>
-                </div>
-            )}
+            {bulk.toolbar}
 
             {error && <Alert severity="error" title="Error">{error}</Alert>}
 

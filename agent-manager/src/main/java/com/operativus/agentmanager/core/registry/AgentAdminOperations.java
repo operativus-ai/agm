@@ -3,7 +3,6 @@ package com.operativus.agentmanager.core.registry;
 import com.operativus.agentmanager.core.model.definitions.AgentDefinition;
 import com.operativus.agentmanager.core.entity.AgentAuditEntity;
 import com.operativus.agentmanager.core.entity.AgentRun;
-import com.operativus.agentmanager.core.model.DeveloperMetricsDTO;
 import com.operativus.agentmanager.core.model.TopologyDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +24,6 @@ public interface AgentAdminOperations {
     AgentDefinition exportAgent(String id);
     AgentDefinition importAgent(AgentDefinition definition);
     TopologyDTO getAgentTopology(String id);
-    DeveloperMetricsDTO getDeveloperMetrics(String id);
     AgentDefinition rollbackAgent(String agentId, String auditId);
     List<AgentDefinition> getAgentVersions(String agentId);
     void cancelRun(String runId);

@@ -1,4 +1,4 @@
-import type { AgentConfig, PaginatedResponse, AgentRun, AgentAudit, AgentTopology, BulkActionResponse, DeveloperMetrics } from '../../../shared/types/api';
+import type { AgentConfig, PaginatedResponse, AgentRun, AgentAudit, AgentTopology } from '../../../shared/types/api';
 import { ApiClient } from '../../../shared/api/client';
 
 const API_BASE_URL = '/admin/agents';
@@ -75,22 +75,6 @@ export class AgentAdminApi {
    */
   static async getAgentTopology(id: string): Promise<AgentTopology> {
     return ApiClient.get<AgentTopology>(`${API_BASE_URL}/${id}/topology`);
-  }
-
-  /**
-   * Fetch developer metrics for an agent.
-   * Maps to Backend: GET /api/admin/agents/{id}/dx-metrics
-   */
-  static async getAgentDxMetrics(id: string): Promise<DeveloperMetrics> {
-    return ApiClient.get<DeveloperMetrics>(`${API_BASE_URL}/${id}/dx-metrics`);
-  }
-
-  static async bulkAction(ids: string[], action: 'ENABLE' | 'DISABLE' | 'DELETE'): Promise<BulkActionResponse> {
-    return ApiClient.post<BulkActionResponse>(`${API_BASE_URL}/bulk-action`, { ids, action });
-  }
-
-  static async bulkExport(ids: string[]): Promise<BulkActionResponse> {
-    return ApiClient.post<BulkActionResponse>(`${API_BASE_URL}/bulk-export`, { ids });
   }
 
   static async cancelRun(runId: string): Promise<void> {

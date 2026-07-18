@@ -1,15 +1,9 @@
 package com.operativus.agentmanager.control.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.operativus.agentmanager.control.service.PersistentJobQueueService;
-import com.operativus.agentmanager.control.service.queue.AgentBulkActionJobHandler;
-import com.operativus.agentmanager.control.service.queue.BulkExportJobHandler;
 import com.operativus.agentmanager.core.entity.AgentAuditEntity;
 import com.operativus.agentmanager.core.entity.AgentRun;
 import com.operativus.agentmanager.core.exception.BusinessValidationException;
 import com.operativus.agentmanager.core.model.definitions.AgentDefinition;
-import com.operativus.agentmanager.core.model.BulkActionResponse;
-import com.operativus.agentmanager.core.model.DeveloperMetricsDTO;
 import com.operativus.agentmanager.core.registry.AgentAdminOperations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -55,19 +49,10 @@ public class AgentAdminController {
     private static final Logger log = LoggerFactory.getLogger(AgentAdminController.class);
 
     private final AgentAdminOperations agentAdminService;
-    private final PersistentJobQueueService jobQueueService;
-    private final ObjectMapper objectMapper;
 
-    public AgentAdminController(AgentAdminOperations agentAdminService,
-                                PersistentJobQueueService jobQueueService,
-                                ObjectMapper objectMapper) {
+    public AgentAdminController(AgentAdminOperations agentAdminService) {
         this.agentAdminService = agentAdminService;
-        this.jobQueueService = jobQueueService;
-        this.objectMapper = objectMapper;
     }
-
-    record BulkActionRequest(List<String> ids, String action) {}
-    record BulkExportRequest(List<String> ids) {}
 
     /**
      * @summary Retrieves a paginated list of all Agent definitions.
@@ -232,17 +217,6 @@ public class AgentAdminController {
     }
 
     /**
-     * @summary Generates developer experience (DX) and performance metrics for a specific agent.
-     * @logic
-     * - Delegates to AgentAdminService to compile Telemetry and Run aggregates.
-     * - Wraps the result in a ResponseEntity.
-     */
-    @GetMapping("/{id}/dx-metrics")
-    public ResponseEntity<DeveloperMetricsDTO> getDeveloperMetrics(@PathVariable String id) {
-        return ResponseEntity.ok(agentAdminService.getDeveloperMetrics(id));
-    }
-
-    /**
      * @summary Lists all version snapshots for an agent.
      */
     @GetMapping("/{id}/versions")
@@ -259,21 +233,6 @@ public class AgentAdminController {
             @PathVariable String auditId) {
         log.info("Rolling back agent {} to audit snapshot {}", id, auditId);
         return ResponseEntity.ok(agentAdminService.rollbackAgent(id, auditId));
-    }
-
-    @PostMapping("/bulk-action")
-    public ResponseEntity<BulkActionResponse> bulkAction(@RequestBody BulkActionRequest req) throws Exception {
-        log.info("Bulk action '{}' on {} agents", req.action(), req.ids().size());
-        String payload = objectMapper.writeValueAsString(new AgentBulkActionJobHandler.Payload(req.action(), req.ids()));
-        var job = jobQueueService.enqueue(AgentBulkActionJobHandler.JOB_TYPE, null, payload, null, null);
-        return ResponseEntity.accepted().body(new BulkActionResponse(job.getId()));
-    }
-
-    @PostMapping("/bulk-export")
-    public ResponseEntity<BulkActionResponse> bulkExport(@RequestBody BulkExportRequest req) throws Exception {
-        String payload = objectMapper.writeValueAsString(new BulkExportJobHandler.Payload(req.ids()));
-        var job = jobQueueService.enqueue(BulkExportJobHandler.JOB_TYPE, null, payload, null, null);
-        return ResponseEntity.accepted().body(new BulkActionResponse(job.getId()));
     }
 
     @PostMapping("/runs/{runId}/cancel")

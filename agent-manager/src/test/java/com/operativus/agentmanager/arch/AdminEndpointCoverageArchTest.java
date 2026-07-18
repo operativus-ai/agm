@@ -183,11 +183,8 @@ public class AdminEndpointCoverageArchTest {
             "com.operativus.agentmanager.control.controller.AgentAdminController#getAgentHistory",                           // focused: AgentAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.AgentAdminController#getAgentLogs",                              // focused: AgentAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.AgentAdminController#getAgentAuditHistory",                      // focused: AgentAdminAuthzRuntimeTest
-            "com.operativus.agentmanager.control.controller.AgentAdminController#getDeveloperMetrics",                       // focused: AgentAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.AgentAdminController#getAgentVersions",                          // focused: AgentAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.AgentAdminController#rollbackAgent",                             // focused: AgentAdminAuthzRuntimeTest
-            "com.operativus.agentmanager.control.controller.AgentAdminController#bulkAction",                                // focused: AgentAdminAuthzRuntimeTest
-            "com.operativus.agentmanager.control.controller.AgentAdminController#bulkExport",                                // focused: AgentAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.AgentAdminController#cancelRun"                                  // focused: AgentAdminAuthzRuntimeTest
     );
 

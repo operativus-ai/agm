@@ -7,14 +7,10 @@ import { LuPencil, LuBookOpen, LuLock, LuLockOpen } from 'react-icons/lu';
 /**
  * Column definitions for the Agent Administration table, extracted from
  * AgentAdminDashboardPage to keep the page a thin assembler. Pure factory: it
- * takes the page's selection state + row-action handlers and returns the
+ * takes the page's row-action handlers and returns the
  * TanStack column array. No data fetching or local state here.
  */
 export interface AgentAdminColumnHandlers {
-  allSelected: boolean;
-  selectedIds: Set<string>;
-  onToggleSelectAll: () => void;
-  onToggleSelectOne: (id: string) => void;
   onEdit: (agent: AgentConfig) => void;
   onLoadKnowledge: (agentId: string) => void;
   onQuarantine: (agentId: string, name: string) => void;
@@ -22,36 +18,12 @@ export interface AgentAdminColumnHandlers {
 }
 
 export function buildAgentAdminColumns({
-  allSelected,
-  selectedIds,
-  onToggleSelectAll,
-  onToggleSelectOne,
   onEdit,
   onLoadKnowledge,
   onQuarantine,
   onUnquarantine,
 }: AgentAdminColumnHandlers): ColumnDef<AgentConfig, unknown>[] {
   return [
-    {
-      id: 'select',
-      header: () => (
-        <input
-          type="checkbox"
-          className="checkbox checkbox-xs"
-          checked={allSelected}
-          onChange={onToggleSelectAll}
-        />
-      ),
-      enableSorting: false,
-      cell: ({ row }) => (
-        <input
-          type="checkbox"
-          className="checkbox checkbox-xs"
-          checked={selectedIds.has(row.original.agentId)}
-          onChange={() => onToggleSelectOne(row.original.agentId)}
-        />
-      ),
-    },
     {
       accessorKey: 'agentId',
       header: 'Agent ID',

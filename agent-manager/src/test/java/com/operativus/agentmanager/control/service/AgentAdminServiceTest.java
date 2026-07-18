@@ -6,7 +6,6 @@ import com.operativus.agentmanager.core.entity.*;
 import com.operativus.agentmanager.core.exception.BusinessValidationException;
 import com.operativus.agentmanager.core.exception.ResourceNotFoundException;
 import com.operativus.agentmanager.core.exception.StaleDataException;
-import com.operativus.agentmanager.core.model.DeveloperMetricsDTO;
 import com.operativus.agentmanager.core.model.TopologyDTO;
 import com.operativus.agentmanager.core.model.definitions.AgentDefinition;
 import com.operativus.agentmanager.core.model.enums.RunStatus;
@@ -38,7 +37,6 @@ public class AgentAdminServiceTest {
     @Mock private AgentRepository agentRepository;
     @Mock private RunRepository runRepository;
     @Mock private AgentAuditRepository auditRepository;
-    @Mock private EvaluationRepository evaluationRepository;
     @Mock private TransitionEdgeRepository transitionEdgeRepository;
     @Mock private ObjectMapper objectMapper;
     @Mock private com.operativus.agentmanager.core.registry.AgentOperations agentOperations;
@@ -51,7 +49,7 @@ public class AgentAdminServiceTest {
         mockedContext = mockStatic(com.operativus.agentmanager.core.callback.AgentContextHolder.class);
         mockedContext.when(com.operativus.agentmanager.core.callback.AgentContextHolder::getOrgId)
                 .thenReturn(TEST_ORG);
-        service = new AgentAdminService(agentRepository, runRepository, auditRepository, evaluationRepository, transitionEdgeRepository, objectMapper, agentOperations);
+        service = new AgentAdminService(agentRepository, runRepository, auditRepository, transitionEdgeRepository, objectMapper, agentOperations);
     }
 
     @AfterEach
@@ -238,26 +236,6 @@ public class AgentAdminServiceTest {
         assertTrue(topology.nodes().stream().anyMatch(n -> "agent".equals(n.type()) && "root-1".equals(n.id())));
         assertTrue(topology.nodes().stream().anyMatch(n -> "tool".equals(n.type()) && "tool_search".equals(n.id())));
         assertTrue(topology.nodes().stream().anyMatch(n -> "member".equals(n.type()) && "child-1".equals(n.id())));
-    }
-
-    @Test
-    void getDeveloperMetrics_CalculatesScoreAndGrade() {
-        AgentEntity entity = new AgentEntity();
-        entity.setId("agent-1");
-        entity.setTools(List.of("t1", "t2"));
-        // Simulating highly complex array via tools mapping size
-        
-        when(agentRepository.findByIdAndOrgId("agent-1", TEST_ORG)).thenReturn(Optional.of(entity));
-        
-        com.operativus.agentmanager.core.entity.Evaluation eval1 = mock(com.operativus.agentmanager.core.entity.Evaluation.class);
-        com.operativus.agentmanager.core.entity.Evaluation eval2 = mock(com.operativus.agentmanager.core.entity.Evaluation.class);
-        when(evaluationRepository.findByAgentId("agent-1")).thenReturn(List.of(eval1, eval2));
-        
-        DeveloperMetricsDTO metrics = service.getDeveloperMetrics("agent-1");
-
-        assertEquals(20.0, metrics.testabilityScore()); // 2 * 10
-        assertEquals(2, metrics.evaluationCount());
-        assertEquals("A", metrics.maintainabilityGrade()); // complexityFactor = 2 (< 5 = A)
     }
 
     // F8 — admin cancel of a non-terminal run delegates to AgentOperations.cancelRun

@@ -74,15 +74,8 @@ public class AgentAdminAuthzRuntimeTest extends BaseIntegrationTest {
             "instructions", "do nothing",
             "model", "gpt-4o-mini");
 
-    private static final Map<String, Object> BULK_ACTION_BODY = Map.of(
-            "ids", List.of(),
-            "action", "delete");
-
-    private static final Map<String, Object> BULK_EXPORT_BODY = Map.of(
-            "ids", List.of());
-
     /**
-     * All 18 endpoints on {@code AgentAdminController}. Class-level
+     * All 15 endpoints on {@code AgentAdminController}. Class-level
      * {@code @PreAuthorize("hasRole('ADMIN')")} (PR #969) gates every entry uniformly.
      */
     private static final List<EndpointSpec> ENDPOINTS = List.of(
@@ -98,12 +91,9 @@ public class AgentAdminAuthzRuntimeTest extends BaseIntegrationTest {
             new EndpointSpec("/api/admin/agents/probe-id/export", HttpMethod.GET, null),
             new EndpointSpec("/api/admin/agents/import", HttpMethod.POST, AGENT_BODY),
             new EndpointSpec("/api/admin/agents/probe-id/topology", HttpMethod.GET, null),
-            new EndpointSpec("/api/admin/agents/probe-id/dx-metrics", HttpMethod.GET, null),
             new EndpointSpec("/api/admin/agents/probe-id/versions", HttpMethod.GET, null),
             new EndpointSpec("/api/admin/agents/probe-id/rollback/probe-audit-id",
                     HttpMethod.POST, null),
-            new EndpointSpec("/api/admin/agents/bulk-action", HttpMethod.POST, BULK_ACTION_BODY),
-            new EndpointSpec("/api/admin/agents/bulk-export", HttpMethod.POST, BULK_EXPORT_BODY),
             new EndpointSpec("/api/admin/agents/runs/probe-run-id/cancel",
                     HttpMethod.POST, null));
 
