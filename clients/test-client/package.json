@@ -1,0 +1,20 @@
+{
+  "name": "agm-test-client",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Headless test client for Agent Manager — typed SDK + SSE assertion harness (the 'test/exercise the API' archetype from clients/docs/analysis/demo-what-is-a-client.md)",
+  "scripts": {
+    "smoke": "tsx src/smoke.ts",
+    "full": "tsx src/full.ts",
+    "cleanup": "tsx src/cleanup.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "~5.9.0",
+    "vitest": "^4.0.0"
+  }
+}

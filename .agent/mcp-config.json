@@ -1,0 +1,30 @@
+{
+  "mcpServers": [
+    {
+      "name": "filesystem",
+      "type": "local",
+      "enabled": true
+    },
+    {
+      "name": "codebase",
+      "type": "local",
+      "enabled": true
+    },
+    {
+      "name": "sequential-thinking",
+      "type": "local",
+      "enabled": true
+    },
+    {
+      "name": "context7",
+      "type": "remote",
+      "url": "http://localhost:3000",
+      "enabled": true
+    },
+    {
+      "name": "postgres",
+      "type": "database",
+      "connection": "postgres://localhost:5432/agentos"
+    }
+  ]
+}

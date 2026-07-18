@@ -1,0 +1,73 @@
+# Caddyfile for the Agent Manager web tier.
+#
+# ${DOMAIN} resolves at container start from the environment. The compose
+# file sources .env.prod and exposes DOMAIN to this container. Setting
+# DOMAIN to a real DNS name triggers Caddy's automatic HTTPS — Let's Encrypt
+# certs are requested on first start and renewed automatically (cert state
+# persists in the `caddy_data` named volume).
+#
+# Setting DOMAIN to `:80` (a port-only address) keeps Caddy in plain-HTTP
+# mode — useful for local production-like runs without a real domain.
+
+{$DOMAIN} {
+	# ── Backend routing ──────────────────────────────────────────────────
+	# /api/* and /mcp/* reverse-proxy to Spring Boot (port 8080 on the Docker
+	# network). These MUST be `handle` blocks: handle blocks are mutually
+	# exclusive and take routing priority, so API requests are served here and
+	# never fall through to the SPA `try_files` below.
+	#
+	# Why handle (not bare `reverse_proxy /api/*`): Caddy runs directives in a
+	# FIXED order, not written order — `try_files` (a rewrite) executes BEFORE
+	# `reverse_proxy`. With both at the site level, /api/* gets rewritten to
+	# /index.html before reverse_proxy can match, so every API call is served
+	# the SPA shell (HTTP 200 text/html) instead of being proxied. `handle`
+	# scopes routing into exclusive groups and fixes that.
+	#
+	# We deliberately do NOT proxy /actuator/* — management/metrics endpoints
+	# stay internal-only (ops hit them via `docker compose exec app ...`).
+	handle /api/* {
+		reverse_proxy app:8080
+	}
+	handle /mcp/* {
+		reverse_proxy app:8080
+	}
+
+	# ── SPA ──────────────────────────────────────────────────────────────
+	# Static assets for every other path; `try_files` falls back to
+	# /index.html so client-side routing (react-router) survives deep-link
+	# direct loads.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+
+		# Vite-built hashed assets are immutable — long cache is safe.
+		# index.html itself is NOT hashed and must always revalidate so a
+		# deploy doesn't strand clients on a stale shell pointing at outdated
+		# asset hashes. Scoped to this handle so it never tags API responses.
+		header ?Cache-Control "public, max-age=31536000, immutable"
+		@indexhtml path /index.html /
+		header @indexhtml Cache-Control "no-cache, no-store, must-revalidate"
+	}
+
+	# ── Cross-cutting ─────────────────────────────────────────────────────
+	# Gzip + zstd for text assets. Caddy negotiates per-response.
+	encode gzip zstd
+
+	# Hardening headers (apply to all responses). HSTS is only meaningful over
+	# HTTPS — Caddy strips it on plain-HTTP responses automatically.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# Access log to stdout so `docker compose logs web` shows requests.
+	# Sensitive headers (Authorization, Cookie) are redacted by default in
+	# Caddy's JSON log encoder.
+	log {
+		output stdout
+		format console
+	}
+}

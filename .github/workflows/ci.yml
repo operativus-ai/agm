@@ -1,0 +1,156 @@
+name: CI
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Nightly full integration suite + on-demand (see the `integration` job gating).
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  remove-by-check:
+    name: Past-due // REMOVE BY trip-wires
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run check-remove-by.sh
+        run: ./scripts/check-remove-by.sh
+
+  unit:
+    name: Unit tests (./mvnw test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: agent-manager
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+
+      - name: Run unit tests
+        run: ./mvnw -B test
+
+      - name: Upload Surefire reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports-unit
+          path: agent-manager/target/surefire-reports/
+          if-no-files-found: ignore
+
+  smoke:
+    name: Golden-path smoke (fast-fail E2E)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: agent-manager
+    # Runs in parallel with the full integration job so a smoke-only break
+    # (the canonical "is the product alive" probe) surfaces in ~1 minute
+    # instead of waiting for the 5–10 minute full suite. Both jobs gate PR
+    # merge — failing one or the other is enough to block.
+    #
+    # Membership rule: any test class whose name matches *GoldenPathSmoke*
+    # is a composed register → create → run → query journey. Add new
+    # smokes by following that naming convention; nothing else here needs
+    # to change.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+
+      # -Dexcluded.groups= clears the Surefire @Tag("integration") exclude;
+      # -Dtest= scopes to the smoke pattern only. The pgvector Testcontainer
+      # is launched by BaseIntegrationTest's static block — Docker is
+      # available on ubuntu-latest runners out of the box.
+      - name: Run golden-path smoke tests
+        run: ./mvnw -B test -Dexcluded.groups= -Dtest='*GoldenPathSmoke*'
+
+      - name: Upload Surefire reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports-smoke
+          path: agent-manager/target/surefire-reports/
+          if-no-files-found: ignore
+
+  integration:
+    # NIGHTLY (+ on-demand) full integration suite — NOT per-PR.
+    #
+    # Why not per-PR: ~346 @Tag("integration") classes each boot a full Spring context +
+    # pgvector Testcontainer. Serially on one ubuntu-latest (2 vCPU) the suite runs >60m
+    # (context-startup-bound), so per-PR it only ever got cancelled at the timeout — zero
+    # real signal. Sharding cuts wall-clock but breaks the suite: many tests are not
+    # self-contained (they rely on full-suite execution order / shared state), so an
+    # arbitrary subset fails with spurious 401/403/404s. Until that test-isolation debt is
+    # paid down (so the suite can be sharded for fast per-PR runs), it must run as ONE
+    # ordered job — green but slow. Run it nightly and on demand; per-PR coverage is the
+    # fast unit + golden-path-smoke jobs above.
+    name: Integration tests (Testcontainers, nightly)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: agent-manager
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+
+      # Testcontainers launches its own pgvector/pgvector:pg16 container via
+      # BaseIntegrationTest. -Dexcluded.groups= clears the @Tag("integration") exclude so
+      # the full suite runs in one ordered JVM (the ordering the tests currently depend on).
+      #
+      # -Dtest.jvm.args sets the heap of the Surefire-forked test JVM (appended to the pom's
+      # <argLine> as ${test.jvm.args} — normal resolution, so this -D actually reaches the
+      # fork; the sibling @{argLine} is late-binding for jacoco and ignores -D). The full
+      # suite boots ~346 Spring contexts in that single fork; on the default heap (~25% of
+      # runner RAM ≈ 4g) it OOMs ("Java heap space") partway through, which trips Spring's
+      # ApplicationContext-failure threshold and cascades EVERY remaining test class into
+      # spurious failures. 10g gives real headroom on the 16 GB ubuntu-latest runner while
+      # leaving room for Docker + the pgvector container. Scoped to this nightly command
+      # only — local `./mvnw test` is untouched.
+      - name: Run integration tests
+        run: ./mvnw -B test -Dexcluded.groups= -Dtest.jvm.args="-Xmx10g"
+
+      - name: Upload Surefire reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports-integration
+          path: agent-manager/target/surefire-reports/
+          if-no-files-found: ignore

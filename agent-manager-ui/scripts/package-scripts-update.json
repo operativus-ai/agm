@@ -1,0 +1,77 @@
+{
+  "scripts": {
+    "comment": "Phase 5 Refactoring Tools - Add these scripts to your package.json",
+    
+    "phase5:setup": "npm install --save-dev puppeteer jest-environment-jsdom @testing-library/react @testing-library/jest-dom gzip-size glob",
+    
+    "benchmark": "node scripts/performance-benchmark.js",
+    "benchmark:component": "node scripts/performance-benchmark.js --component=$1",
+    "benchmark:phase": "node scripts/performance-benchmark.js --phase=$1",
+    "benchmark:iterations": "node scripts/performance-benchmark.js --iterations=$1",
+    
+    "analyze-bundle": "node scripts/bundle-analyzer.js",
+    "analyze-bundle:compare": "node scripts/bundle-analyzer.js --compare-phases",
+    "analyze-bundle:format": "node scripts/bundle-analyzer.js --format=$1",
+    "analyze-bundle:threshold": "node scripts/bundle-analyzer.js --threshold=$1",
+    
+    "migrate": "node scripts/migrate-to-consolidated.js",
+    "migrate:dry-run": "node scripts/migrate-to-consolidated.js --dry-run",
+    "migrate:component": "node scripts/migrate-to-consolidated.js --component=$1",
+    "migrate:priority": "node scripts/migrate-to-consolidated.js --priority=$1",
+    "migrate:rollback": "node scripts/migrate-to-consolidated.js --rollback",
+    
+    "test:integration": "jest --testPathPattern=\"integration\" --testEnvironment=jsdom",
+    "test:performance": "jest --testPathPattern=\"performance\" --testTimeout=60000",
+    "test:compatibility": "jest --testPathPattern=\"compatibility\"",
+    "test:refactoring": "npm run test:integration && npm run test:performance && npm run test:compatibility",
+    
+    "refactoring:status": "echo 'Running refactoring status check...' && npm run benchmark && npm run analyze-bundle",
+    "refactoring:validate": "npm run test:refactoring && npm run refactoring:status",
+    "refactoring:monitor": "npm run benchmark -- --phase=all && npm run analyze-bundle -- --compare-phases",
+    
+    "dev:enhanced": "npm run refactoring:validate && npm start",
+    "build:analyze": "npm run build && npm run analyze-bundle",
+    "build:benchmark": "npm run build && npm run benchmark",
+    
+    "docs:serve": "npx http-server ./bundle-analysis -p 8080 -o",
+    "docs:generate": "echo 'Generating comprehensive documentation...' && npm run benchmark && npm run analyze-bundle && echo 'Documentation available at ./bundle-analysis/bundle-report.html'",
+    
+    "postinstall": "echo '🎉 Phase 5 refactoring tools ready! Run npm run docs:generate for reports.'",
+    "precommit": "npm run test:refactoring",
+    "prepush": "npm run refactoring:validate"
+  },
+  
+  "devDependencies": {
+    "comment": "Add these to your existing devDependencies",
+    "puppeteer": "^21.0.0",
+    "gzip-size": "^7.0.0",
+    "glob": "^10.0.0",
+    "@testing-library/react": "^13.0.0",
+    "@testing-library/jest-dom": "^5.16.0",
+    "jest-environment-jsdom": "^29.0.0"
+  },
+  
+  "jest": {
+    "comment": "Add to your jest config",
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": ["<rootDir>/src/setupTests.ts"],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/",
+      "/build/"
+    ],
+    "collectCoverageFrom": [
+      "src/shared/**/*.{ts,tsx}",
+      "!src/shared/**/*.test.{ts,tsx}",
+      "!src/shared/**/__tests__/**/*"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
+  }
+}

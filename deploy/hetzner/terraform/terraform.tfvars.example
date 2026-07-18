@@ -1,0 +1,19 @@
+# Copy to terraform.tfvars and fill in. terraform.tfvars is gitignored-by-convention
+# (it holds your token) — never commit it.
+
+# Hetzner Cloud API token (Project → Security → API tokens, Read & Write).
+# Prefer exporting instead of putting it here:  export TF_VAR_hcloud_token=...
+hcloud_token = ""
+
+# Authorized SSH key (public). Must be a key you hold the private half of.
+ssh_public_key_path = "~/.ssh/id_ed25519.pub"
+
+# Lock SSH to your IP. Find it with: curl -s ifconfig.me
+# Leaving 0.0.0.0/0 works but exposes sshd to the world (UFW + fail2ban still apply).
+admin_ssh_cidr = "0.0.0.0/0"
+
+# Optional overrides:
+# server_name      = "agent-manager"
+# server_type      = "cpx41"     # 8 vCPU / 16 GB (recommended). Smaller: cpx31 (4/8).
+# location         = "nbg1"      # EU. US East: "ash". US West: "hil".
+# data_volume_size = 50          # GB for /var/lib/docker (Postgres grows here).

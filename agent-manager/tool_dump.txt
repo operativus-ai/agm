@@ -1,0 +1,1 @@
+REGISTERED SPRING AI TOOLS: [bulkIngestDocumentationSite, delegate_to_agent, save_memory, readWebpage, schedule_task, stockPrice, delete_database, webSearch, search_knowledge_base, pushToKnowledgeBase, firecrawl_web_search, firecrawl_scrape_url, run_python, searchKnowledgeBaseTool, hand_off_to_agent]

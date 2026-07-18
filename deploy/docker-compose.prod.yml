@@ -1,0 +1,160 @@
+# Production single-VM stack for Agent Manager.
+#
+# Usage:
+#   cp deploy/.env.prod.example deploy/.env.prod
+#   # edit deploy/.env.prod — fill in DOMAIN, JWT_SECRET, DB_PASSWORD, CORS_ORIGINS
+#   chmod 600 deploy/.env.prod
+#   docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml up -d
+#
+# What this brings up:
+#   web       Caddy serving the SPA + reverse-proxying /api/* and /mcp/* to app.
+#             Handles TLS automatically via Let's Encrypt when DOMAIN is a real
+#             hostname; runs plain HTTP if DOMAIN is set to ":80".
+#   app       Spring Boot in the production profile. Reads JWT_SECRET, DB
+#             credentials, and CORS origins from environment. Refuses to start
+#             on the prod profile if CORS origins are left at placeholder.
+#   postgres  pgvector/pgvector:pg17. Data persists in the named volume.
+#   redis     Cache + pubsub. AOF on for crash-recovery.
+#
+# Single-VM topology: everything lives on one Docker network. Only the web tier
+# (ports 80 + 443) is exposed to the host. The app, postgres, and redis services
+# are reachable only inside the compose network — no direct internet access.
+
+services:
+  web:
+    build:
+      context: ../agent-manager-ui
+    # Pull from GHCR when IMAGE_TAG is a CI-built tag (release.yml); the build:
+    # block above still lets the manual build-on-server path tag this name locally.
+    image: ghcr.io/sesker69/agm-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      # Caddy reads $DOMAIN from its environment to decide HTTPS vs plain-HTTP.
+      # Set to a real hostname (with DNS pointing at this VM) for auto-TLS.
+      # Set to ":80" for plain HTTP (local production-like runs without TLS).
+      DOMAIN: ${DOMAIN:-:80}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Persist the Let's Encrypt account + issued certs across container
+      # restarts. Without these, every restart would re-request a cert
+      # (Let's Encrypt rate-limits, so this matters).
+      - caddy_data:/data
+      - caddy_config:/config
+
+  app:
+    build:
+      context: ../agent-manager
+    image: ghcr.io/sesker69/agm-app:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      # Required. The prod profile reads ${JWT_SECRET} — boot fails fast if
+      # missing. Generate with: openssl rand -base64 32
+      JWT_SECRET: ${JWT_SECRET}
+      AGENTMANAGER_APP_JWTSECRET: ${JWT_SECRET}
+      # CORS origin allowlist for the SPA. The prod profile refuses to start
+      # if this is left at the "https://your-production-domain.com" placeholder
+      # (pinned by WebConfig.validateCorsOriginsOrFail).
+      APP_CORS_ALLOWED_ORIGIN_PATTERNS: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS}
+      # Datasource targets the postgres service on the same compose network.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/agent_manager
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-admin}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      # Redis
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      # Required: encryption-at-rest key for outbound API keys stored in
+      # a2a_remote_agents.outbound_api_key. Boot fails fast in the prod profile
+      # if missing (pinned by OutboundApiKeyConverter). Format is the versioned
+      # map (preferred): "1:<base64-32-bytes>". Generate with:
+      # openssl rand -base64 32
+      AGM_SECURITY_OUTBOUND_KEY_ENCRYPTION_KEYS: ${AGM_SECURITY_OUTBOUND_KEY_ENCRYPTION_KEYS}
+      AGM_SECURITY_OUTBOUND_KEY_ENCRYPTION_ACTIVE_VERSION: ${AGM_SECURITY_OUTBOUND_KEY_ENCRYPTION_ACTIVE_VERSION:-1}
+      # SMTP — required for self-serve password reset emails. Without these,
+      # /api/auth/password-reset/request still returns 200 (anti-enumeration)
+      # but the email never lands and the failure is logged at ERROR.
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      # Embedded in reset-link emails; should match DOMAIN (with scheme).
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL}
+      # Google GenAI project-id. Default "unused" satisfies the Google AI
+      # embedding auto-config's hasText assertion when the operator isn't
+      # using Google providers. Override with a real project-id when using
+      # Vertex AI embeddings / Gemini. Empty string is NOT a valid value —
+      # the auto-config Asserts hasText and fail-fasts the app boot.
+      GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID:-unused}
+      # Firecrawl base URL for the web-scraping tool. Defaults to the in-network
+      # firecrawl-api service started by the OPTIONAL deploy/docker-compose.firecrawl.yml
+      # overlay. If that overlay isn't running, scraping degrades gracefully (the app
+      # health-checks Firecrawl before use). Point at a remote/cloud Firecrawl
+      # (https://api.firecrawl.dev) instead to skip self-hosting.
+      APP_FIRECRAWL_BASEURL: ${APP_FIRECRAWL_BASEURL:-http://firecrawl-api:3002}
+      # First-admin bootstrap. Self-registration only grants ROLE_USER and LLM
+      # keys are admin-gated, so a fresh deploy otherwise needs manual SQL role
+      # promotion. Set ADMIN_BOOTSTRAP_ENABLED=true + the three credentials for
+      # the first boot, then set it back to false. Idempotent across restarts.
+      ADMIN_BOOTSTRAP_ENABLED: ${ADMIN_BOOTSTRAP_ENABLED:-false}
+      ADMIN_BOOTSTRAP_USERNAME: ${ADMIN_BOOTSTRAP_USERNAME:-}
+      ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-}
+      ADMIN_BOOTSTRAP_ORG_ID: ${ADMIN_BOOTSTRAP_ORG_ID:-DEFAULT_SYSTEM_ORG}
+      ADMIN_BOOTSTRAP_ROLE: ${ADMIN_BOOTSTRAP_ROLE:-ROLE_SUPER_ADMIN}
+    healthcheck:
+      # Probe the PUBLIC shallow liveness endpoint, not /actuator/health: the prod profile
+      # drops /actuator/** from app.security.public-paths, so an unauthenticated probe there
+      # 401s and the container never goes healthy (which blocks `web` via depends_on). It is
+      # also a deep check that 503s on any non-critical component (e.g. mail) — wrong for liveness.
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: agent_manager
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Mount the backup dir so backup.sh on the host can write here via
+      # `docker compose exec postgres pg_dump > /backups/...`
+      - ./backups:/backups
+    healthcheck:
+      # pg_isready as DB user — confirms the server is accepting connections
+      # AND the DB itself exists (not just postgres process up).
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d agent_manager"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # AOF for durability — RDB-only snapshots can lose up to last-save data.
+    # The agent runtime treats Redis as a cache, not a system of record, so
+    # data loss on restart is recoverable, but AOF keeps tests sane.
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:

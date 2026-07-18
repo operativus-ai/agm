@@ -1,0 +1,152 @@
+# --- Dependencies ---
+node_modules/
+jspm_packages/
+.pnp
+.pnp.js
+
+# --- Build Outputs ---
+dist/
+build/
+.next/
+out/
+bin/
+obj/
+
+# --- Environment Variables & Secrets ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Production secrets file consumed by deploy/docker-compose.prod.yml.
+# Operators copy deploy/.env.prod.example to deploy/.env.prod and fill in
+# live values; that copy must never be tracked.
+deploy/.env.prod
+*.pem
+*.key
+
+# --- Logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.eslintcache
+
+# --- IDE & Editor Metadata ---
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Antigravity / Agentic IDE Settings ---
+# Keep your project-wide agent config, but ignore personal session logs
+
+
+# --- Testing ---
+/coverage
+.nyc_output
+
+# =====================
+# Java
+# =====================
+
+# --- Compiled Class Files ---
+*.class
+*.log
+*.ctxt
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# --- Build Tool Directories ---
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+# If you use the Maven Wrapper
+!.mvn/wrapper/maven-wrapper.jar
+
+# --- IDE Specific Files ---
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+cmake-build-*/
+
+# VS Code / Antigravity
+.vscode/
+.antigravity/profiles/  # Exclude personal agent profiles but keep agent.json
+!.antigravity/agent.json
+.antigravity/backups/
+
+# --- Docker & Infrastructure ---
+.docker/
+docker-compose.override.yml
+*.db
+*.sqlite
+
+# --- Logs & Performance ---
+logs/
+*.log
+stacktrace.log
+heapdump.hprof
+# Ignore all contents of /docs by default — but use the directory-glob form
+# (/docs/* rather than bare /docs) so git can still descend into selectively
+# un-ignored subpaths via the negation pattern below.
+/docs/*
+
+# Narrow exception: track the launch-readiness inventory + checklist explicitly.
+# Everything else under /docs/ remains untracked per the convention with the
+# ~10 local-only agm-*.md siblings (analysis notes, retros, plans).
+!/docs/analysis
+/docs/analysis/*
+!/docs/analysis/agm-outstanding.md
+!/docs/analysis/agm-launch-checklist.md
+!/docs/analysis/agm-advisor-chain-audit.md
+!/docs/analysis/api-endpoint-sync-audit-be-to-fe.md
+
+# ---- Operativus ----
+/agno
+agno
+agent-api
+/agent-api
+
+# ---- A2A ----
+/a2a-java
+a2a-java
+
+# ---- Langchain4j ----
+/langchain4j
+langchain4j
+/logchain4j
+logchain4j
+
+
+# ---- Website ----
+/website
+
+# ---- Tool & session artifacts ----
+.claude/worktrees/
+.claude/scheduled_tasks.lock
+.claude/audit_*.md
+agent-manager/.claude/
+CODEBASE_ARCHITECTURE_SUMMARY.md
+.playwright-mcp/
+*-loaded.png
+*.docx

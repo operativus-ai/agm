@@ -1,0 +1,4 @@
+[submodule "firecrawl-local"]
+	path = firecrawl-local
+	url = https://github.com/mendableai/firecrawl.git
+	ignore = dirty

@@ -1,0 +1,49 @@
+# Build outputs — let the Dockerfile produce its own fresh build inside the
+# builder stage. Including a pre-built ./target/ from the host would mask
+# reproducibility bugs and may even ship the wrong artifact.
+target/
+**/*.class
+
+# IDE / editor / OS noise
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# CI + project tooling (not needed inside the runtime image)
+.github/
+.claude/
+
+# Local environment + secrets — must never bake into an image layer
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.keystore
+
+# Local logs
+*.log
+/tmp/
+
+# Test scaffolding (sources are still inside src/test/ and excluded by
+# -DskipTests, but be explicit so a future contributor doesn't accidentally
+# ship test fixtures, mock keys, or recorded payloads into a prod image)
+src/test/
+
+# Documentation (not consumed at runtime)
+README.md
+docs/
+*.md
+
+# Frontend sources — agent-manager-ui/ is a sibling module with its own build
+agent-manager-ui/
+website/
+
+# Liquibase migration archive (current changesets live under db/changelog/)
+src/main/resources/db/migration-archive/

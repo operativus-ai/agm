@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <springProperty scope="context" name="springAppName" source="spring.application.name"/>
+
+    <!-- PII Masking Patterns -->
+    <property name="EMAIL_REGEX" value="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}"/>
+    <property name="BEARER_TOKEN_REGEX" value="Bearer\s+[A-Za-z0-9-_=\.]*"/>
+    <!-- OBS-T006.5: scrub SSE short-lived token query params from any logged URL. The
+         filter and store never log the token value directly, but a misconfigured upstream
+         logger or an exception path could echo request URIs verbatim. Defense-in-depth:
+         match `token=<value>` and replace the value with `***`. -->
+    <property name="SSE_TOKEN_REGEX" value="token=[A-Za-z0-9\-]+"/>
+
+    <!-- ================================================================
+         LOCAL DEV CONSOLE APPENDER (Human-Readable with MDC Brackets)
+         ================================================================ -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd'T'HH:mm:ss.SSSXXX}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr([runId=%X{runId:-}]){blue} %clr([agent=%X{agentId:-}]){green} %clr([name=%X{agentName:-}]){green} %clr([phase=%X{phase:-}]){yellow} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %replace(%replace(%m){'${BEARER_TOKEN_REGEX}', 'Bearer ***'}){'${SSE_TOKEN_REGEX}', 'token=***'}%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ================================================================
+         ROLLING FILE APPENDER — persistent local log (TTY-independent).
+         Same MDC context + PII masking as CONSOLE, minus ANSI color codes
+         (noise in a file). Path follows Spring Boot's LOG_FILE (driven by
+         logging.file.name; defaults to /tmp/agm.log). Rolls daily and at
+         50MB, keeps 7 days of history, capped at 1GB total.
+         ================================================================ -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE:-/tmp/agm.log}</file>
+        <encoder>
+            <pattern>%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd'T'HH:mm:ss.SSSXXX}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%15.15t] [runId=%X{runId:-}] [agent=%X{agentId:-}] [name=%X{agentName:-}] [phase=%X{phase:-}] %-40.40logger{39} : %replace(%replace(%m){'${BEARER_TOKEN_REGEX}', 'Bearer ***'}){'${SSE_TOKEN_REGEX}', 'token=***'}%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE:-/tmp/agm.log}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- ================================================================
+         PRODUCTION JSON APPENDER (Machine-Parseable via LogstashEncoder)
+         ================================================================ -->
+    <appender name="JSON_STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"app_name":"${springAppName}"}</customFields>
+
+            <!-- Agentic Context MDC Keys -->
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>runId</includeMdcKeyName>
+            <includeMdcKeyName>sessionId</includeMdcKeyName>
+            <includeMdcKeyName>agentId</includeMdcKeyName>
+            <includeMdcKeyName>agentName</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+            <includeMdcKeyName>phase</includeMdcKeyName>
+            <includeMdcKeyName>orchestrationDepth</includeMdcKeyName>
+
+            <!-- PII Masking in JSON output. Each <value> is a regex compiled into a
+                 RegexValueMasker; matching regions inside any string value are replaced
+                 with <mask>. (logstash-logback-encoder 8.0 API — <valueMasker> with nested
+                 <regex> is NOT valid: RegexValueMasker has no no-arg ctor.) -->
+            <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+                <valueMask>
+                    <value>${EMAIL_REGEX}</value>
+                    <value>${BEARER_TOKEN_REGEX}</value>
+                    <value>${SSE_TOKEN_REGEX}</value>
+                    <mask>****</mask>
+                </valueMask>
+            </jsonGeneratorDecorator>
+        </encoder>
+    </appender>
+
+    <!-- ================================================================
+         ASYNC WRAPPER — Decouples JSON serialization from Virtual Threads
+         ================================================================ -->
+    <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="JSON_STDOUT" />
+    </appender>
+
+    <!-- ================================================================
+         ASYNC WRAPPER — Decouples console I/O from the calling thread.
+         The per-prompt agent-execution logging (STREAM/LLM_TURN/TOOL_CALL/
+         DELEGATION events) emits ~15-25 lines per run; a synchronous
+         ConsoleAppender would block the run thread on each write. Wrapping
+         CONSOLE keeps log I/O off the critical path in local/dev/fallback,
+         mirroring what ASYNC_JSON already does for prod/staging.
+         discardingThreshold=0 so INFO/DEBUG lines are never silently dropped
+         when the queue fills (only the worker thread back-pressures).
+         ================================================================ -->
+    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="CONSOLE" />
+    </appender>
+
+    <!-- ASYNC wrapper for the rolling file — keeps disk I/O off the run thread. -->
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="FILE" />
+    </appender>
+
+    <!-- ================================================================
+         PROFILE-BASED ROUTING
+         ================================================================ -->
+
+    <!-- Local Dev Profile -->
+    <springProfile name="local,dev">
+        <root level="INFO">
+            <appender-ref ref="ASYNC_CONSOLE" />
+            <appender-ref ref="ASYNC_FILE" />
+        </root>
+        <logger name="com.operativus.agentmanager" level="DEBUG"/>
+    </springProfile>
+
+    <!-- Production / Staging Profile (AsyncAppender → JSON) -->
+    <springProfile name="prod,staging">
+        <root level="INFO">
+            <appender-ref ref="ASYNC_JSON" />
+        </root>
+        <logger name="com.operativus.agentmanager.compute" level="DEBUG"/>
+    </springProfile>
+
+    <!-- Fallback if no profile matches -->
+    <springProfile name="!(local | dev | prod | staging)">
+        <root level="INFO">
+            <appender-ref ref="ASYNC_CONSOLE" />
+            <appender-ref ref="ASYNC_FILE" />
+        </root>
+        <logger name="com.operativus.agentmanager.compute" level="DEBUG"/>
+    </springProfile>
+</configuration>

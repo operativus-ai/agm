@@ -1,0 +1,10 @@
+# Exclude build outputs and dependencies from codebase-memory-mcp indexing
+**/target/
+**/node_modules/
+**/.venv/
+**/__pycache__/
+**/*.pyc
+**/*.class
+website/
+agno/
+clients/

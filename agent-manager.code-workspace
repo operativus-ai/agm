@@ -1,0 +1,76 @@
+{
+	"folders": [
+		{
+			"name": "Backend (Java)",
+			"path": "agent-manager"
+		},
+		{
+			"name": "Frontend (React)",
+			"path": "agent-manager-ui"
+		},
+		{
+			"name": "Documentation & Specifications",
+			"path": "."
+		}
+	],
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "mvn: spring-boot:run (debug)",
+				"type": "shell",
+				"command": "bash -c 'set -a; [ -f .env ] && source .env; set +a; ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev \"-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005\" --no-transfer-progress'",
+				"options": {
+					"cwd": "${workspaceFolder:Backend (Java)}"
+				},
+				"isBackground": true,
+				"problemMatcher": {
+					"pattern": { "regexp": "^$" },
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": "Starting AgentmanagerApplication",
+						"endsPattern": "Started AgentmanagerApplication"
+					}
+				},
+				"presentation": {
+					"reveal": "always",
+					"panel": "dedicated",
+					"group": "backend"
+				}
+			}
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"type": "java",
+				"name": "Attach to Agent Manager (5005)",
+				"request": "attach",
+				"hostName": "localhost",
+				"port": 5005,
+				"preLaunchTask": "mvn: spring-boot:run (debug)"
+			}
+		]
+	},
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "automatic",
+		"java.jdt.ls.java.home": "/Users/scottesker/.sdkman/candidates/java/25.0.2-tem",
+		"java.configuration.runtimes": [
+			{
+				"name": "JavaSE-25",
+				"path": "/Users/scottesker/.sdkman/candidates/java/25.0.2-tem",
+				"default": true
+			}
+		],
+		"files.exclude": {
+			"**/target": true,
+			"**/node_modules": true,
+            "**/.DS_Store": true,
+            "agent-manager": true,
+            "agent-manager-ui": true
+		},
+		"java.compile.nullAnalysis.mode": "automatic",
+		"java.debug.settings.onBuildFailureProceed": true
+	}
+}
