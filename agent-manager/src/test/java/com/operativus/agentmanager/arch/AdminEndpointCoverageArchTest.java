@@ -105,11 +105,6 @@ public class AdminEndpointCoverageArchTest {
             "com.operativus.agentmanager.control.controller.ProviderCredentialAdminController#test",                          // matrix
             // Live model-catalog passthrough — admin-only.
             "com.operativus.agentmanager.control.controller.ModelCatalogController#getCatalog",                              // matrix
-            // DR-FR-4 routing-decision telemetry.
-            "com.operativus.agentmanager.control.controller.RoutingDecisionAdminController#list",                            // matrix
-            "com.operativus.agentmanager.control.controller.RoutingDecisionAdminController#get",                             // matrix
-            // Routing-vector backfill — eager-populates routing_vectors per org.
-            "com.operativus.agentmanager.control.controller.RoutingEmbeddingsAdminController#backfill",                      // matrix
             // pgvector re-embed backfill — rebuilds vector_store rows under the current embedding model.
             "com.operativus.agentmanager.control.controller.EmbeddingBackfillAdminController#backfill",                      // focused: EmbeddingBackfillRuntimeTest
 

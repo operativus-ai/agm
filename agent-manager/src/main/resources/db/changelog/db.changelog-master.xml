@@ -342,7 +342,6 @@
     <!-- REQ-DR-1 Universal Dispatch (PR-2a). Per-org routing config for the
          POST /api/runs entry point: default_router team, fallback agent, plus
          flags for LLM and rule-based classifier strategies. One row per org. -->
-    <include file="db/changelog/changes/075-create-org-routing-config-table.sql" />
 
     <!-- REQ-DR-2 Callable Member Composition (PR-3a). Adds member_resolver_type
          to agents (default 'STATIC') so teams can opt into per-request member
@@ -412,23 +411,19 @@
     <!-- DR-FR-1 default-router validation. Caches the team_mode of the
          configured default_router_agent_id at upsert time so the resolver
          doesn't need a second AgentRegistry lookup on every dispatch. -->
-    <include file="db/changelog/changes/088-org-routing-default-router-cached-strategy.sql" />
 
     <!-- DR-FR-4 routing-decision telemetry. Append-only table populated by
          RoutingDecisionRecorderService on every resolveAgentId invocation
          (including UNRESOLVED). Backs the admin routing-decisions endpoint
          and observability counters. Immutability trigger mirrors 029. -->
-    <include file="db/changelog/changes/089-routing-decisions-telemetry.sql" />
 
     <!-- DR-FR-2 LLM classifier — per-org classifier model selection.
          classifier_model_id FK to models(id), nullable; NULL means use the
          system default (agm.routing.classifier.default-model-id property). -->
-    <include file="db/changelog/changes/090-org-routing-classifier-model.sql" />
 
     <!-- DR-FR-3 semantic_scoring_enabled toggle. When TRUE strategy-3 uses
          SemanticAgentScorer (pgvector cosine via Spring AI VectorStore)
          instead of the substring matcher. FALSE default. -->
-    <include file="db/changelog/changes/091-org-routing-semantic-scoring.sql" />
 
     <!-- DR-FR-7 capability vocabulary. agents.capabilities TEXT[] tags fed
          into the LlmAgentClassifier prompt + SemanticAgentScorer embedding
@@ -438,7 +433,6 @@
     <!-- Align routing_decisions.message_hash type with the JPA mapping
          (VARCHAR(64) instead of CHAR(64)) so ddl-auto=validate doesn't fail
          the boot. See changeset 093 for details. -->
-    <include file="db/changelog/changes/093-routing-decisions-message-hash-varchar.sql" />
 
     <!-- REQ-TT-1 TeamMode.tasks backing table. tasks owned by parent team-run via
          ON DELETE CASCADE on team_run_id. status stored as VARCHAR(32) per AGM

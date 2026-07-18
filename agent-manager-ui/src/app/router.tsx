@@ -46,8 +46,6 @@ import { FinOpsPage } from '../features/finops/pages/FinOpsPage';
 import { A2aMeshPage } from '../features/a2a/pages/A2aMeshPage';
 import { UserManagementPage } from '../features/users/pages/UserManagementPage';
 import { ProviderCredentialsPage } from '../features/provider-credentials/pages/ProviderCredentialsPage';
-import { RoutingConfigPage } from '../features/routing-config/pages/RoutingConfigPage';
-import { RoutingDecisionsPage } from '../features/routing-decisions/pages/RoutingDecisionsPage';
 import { AuditLogPage } from '../features/auditlogs/pages/AuditLogPage';
 import { ComposioAdminPage } from '../features/composio/pages/ComposioAdminPage';
 import { RequireRole } from '../shared/components/RequireRole';
@@ -177,8 +175,6 @@ const router = createBrowserRouter([
       },
       { path: 'admin/users', element: <UserManagementPage />, handle: { title: 'Users' } },
       { path: 'admin/provider-credentials', element: <ProviderCredentialsPage />, handle: { title: 'Provider Credentials' } },
-      { path: 'admin/routing-config', element: <RoutingConfigPage />, handle: { title: 'Routing Config' } },
-      { path: 'admin/routing-decisions', element: <RoutingDecisionsPage />, handle: { title: 'Routing Decisions' } },
       { path: 'admin/agents', element: <AgentAdminDashboardPage />, handle: { title: 'Manage Agents' } },
       { path: 'admin/audit-logs', element: <AuditLogPage />, handle: { title: 'Audit Logs' } },
       { path: 'admin/alert-integrations', element: <AlertIntegrationsPage />, handle: { title: 'Alert Integrations' } },

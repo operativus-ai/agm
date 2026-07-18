@@ -7,9 +7,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Domain Responsibility: Shared candidate-list renderer used by both {@link LlmAgentClassifier}
- *     (universal-dispatch strategy 2) and {@code RouterOrchestrator.determineTargetAgent}
- *     (ROUTER-strategy team selection). The two paths compose different prompt preambles
+ * Domain Responsibility: Shared candidate-list renderer used by {@code RouterOrchestrator.determineTargetAgent}
+ *     (ROUTER-strategy team selection) and by edition add-ons (the enterprise
+ *     universal-dispatch classifier). The consumers compose different prompt preambles
  *     and structured-output schemas around this candidate block, but the candidate-list
  *     shape itself must stay consistent so the same LLM understands both calls identically.
  *

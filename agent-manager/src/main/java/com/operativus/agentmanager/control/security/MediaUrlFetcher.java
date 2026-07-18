@@ -17,7 +17,7 @@ import java.time.Duration;
 
 /**
  * Domain Responsibility: Bounded fetcher for media URLs supplied on agent-run requests.
- *   The two {@code mapMedia} helpers ({@code UniversalDispatchController},
+ *   The {@code mapMedia} helpers (e.g.
  *   {@code AgentsController}) previously handed a raw {@code UrlResource} to Spring AI's
  *   media pipeline; Spring AI then eagerly fetches the URL bytes to ship into the LLM
  *   payload with NO size cap, NO connect timeout, and NO read timeout. That made every
