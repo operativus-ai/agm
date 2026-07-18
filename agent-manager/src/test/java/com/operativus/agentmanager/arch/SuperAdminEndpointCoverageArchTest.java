@@ -78,10 +78,7 @@ public class SuperAdminEndpointCoverageArchTest {
 
             // === ComposioCatalogController — class-level gate (gap #21: catalog discovery + bulk import) ===
             "com.operativus.agentmanager.control.controller.ComposioCatalogController#listCatalog",                           // focused: ComposioCatalogAdminAuthzRuntimeTest
-            "com.operativus.agentmanager.control.controller.ComposioCatalogController#importApp",                             // focused: ComposioCatalogAdminAuthzRuntimeTest
-
-            // === FinOpsAdminController — method-level gate on the global valuation-rate write ===
-            "com.operativus.agentmanager.control.controller.FinOpsAdminController#updateValuationRate"                        // focused: FinOpsValuationRateAuthzRuntimeTest
+            "com.operativus.agentmanager.control.controller.ComposioCatalogController#importApp"                              // focused: ComposioCatalogAdminAuthzRuntimeTest
     );
 
     @Test

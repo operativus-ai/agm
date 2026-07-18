@@ -152,17 +152,6 @@ public class AdminEndpointCoverageArchTest {
             "com.operativus.agentmanager.control.controller.WorkflowsController#deleteWorkflowStep",                         // focused: WorkflowsAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.WorkflowsController#updateWorkflow",                             // focused: WorkflowsAdminAuthzRuntimeTest
 
-            // === FinOpsAdminController — class-level @PreAuthorize('hasRole(ADMIN)') (PR #810) ===
-            "com.operativus.agentmanager.control.controller.FinOpsAdminController#getActiveAnomalies",                       // focused: FinOpsRuntimeTest
-            "com.operativus.agentmanager.control.controller.FinOpsAdminController#getActiveBurnRates",                       // focused: FinOpsRuntimeTest
-            "com.operativus.agentmanager.control.controller.FinOpsAdminController#getCacheImpactSeries",                     // focused: FinOpsRuntimeTest
-            "com.operativus.agentmanager.control.controller.FinOpsAdminController#getCostAllocations",                       // focused: FinOpsRuntimeTest
-            "com.operativus.agentmanager.control.controller.FinOpsAdminController#getCostAllocationsByModel",                // focused: FinOpsRuntimeTest
-            "com.operativus.agentmanager.control.controller.FinOpsAdminController#getHistoricalTrends",                      // focused: FinOpsRuntimeTest
-            "com.operativus.agentmanager.control.controller.FinOpsAdminController#getRoiStats",                              // focused: FinOpsRuntimeTest
-            "com.operativus.agentmanager.control.controller.FinOpsAdminController#getValuationRates",                        // focused: FinOpsRuntimeTest
-            "com.operativus.agentmanager.control.controller.FinOpsAdminController#updateBaseline",                           // focused: FinOpsAdminMutationAuthzRuntimeTest
-            // FinOpsAdminController#updateValuationRate removed from this manifest — gated as SUPER_ADMIN (not ADMIN)
             // by PR #1010; covered by AdminEndpointAuthzRuntimeTest.SUPER_ADMIN_ENDPOINTS matrix instead.
             "com.operativus.agentmanager.control.controller.MonitoringController#getGlobalStats",                            // focused: MonitoringControllerRuntimeTest
             "com.operativus.agentmanager.control.controller.MonitoringController#getSandboxCapabilities",                    // focused: MonitoringControllerRuntimeTest

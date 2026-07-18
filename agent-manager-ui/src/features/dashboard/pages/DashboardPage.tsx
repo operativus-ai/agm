@@ -3,7 +3,6 @@ import { DashboardStats } from '../components/DashboardStats';
 import { RecentActivityWidget } from '../components/RecentActivityWidget';
 import { SystemInfoWidget } from '../../settings/components/SystemInfoWidget';
 import { AgentGrid } from '../components/AgentGrid';
-import { AnomalyDetectionWidget } from '../components/AnomalyDetectionWidget';
 import { HitlQueueWidget } from '../components/HitlQueueWidget';
 import { QuickActionsWidget } from '../components/QuickActionsWidget';
 // Edition dashboard widgets/banners — empty stubs in the Core build.
@@ -36,7 +35,6 @@ export const DashboardPage: React.FC = () => {
       <RecentActivityWidget />
 
 
-      <AnomalyDetectionWidget />
 
       <div className="divider my-4"></div>
 
