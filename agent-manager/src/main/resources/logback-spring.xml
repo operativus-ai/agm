@@ -122,7 +122,7 @@
             <appender-ref ref="ASYNC_CONSOLE" />
             <appender-ref ref="ASYNC_FILE" />
         </root>
-        <logger name="com.operativus.agentmanager" level="DEBUG"/>
+        <logger name="ai.operativus.agentmanager" level="DEBUG"/>
     </springProfile>
 
     <!-- Production / Staging Profile (AsyncAppender → JSON) -->
@@ -130,7 +130,7 @@
         <root level="INFO">
             <appender-ref ref="ASYNC_JSON" />
         </root>
-        <logger name="com.operativus.agentmanager.compute" level="DEBUG"/>
+        <logger name="ai.operativus.agentmanager.compute" level="DEBUG"/>
     </springProfile>
 
     <!-- Fallback if no profile matches -->
@@ -139,6 +139,6 @@
             <appender-ref ref="ASYNC_CONSOLE" />
             <appender-ref ref="ASYNC_FILE" />
         </root>
-        <logger name="com.operativus.agentmanager.compute" level="DEBUG"/>
+        <logger name="ai.operativus.agentmanager.compute" level="DEBUG"/>
     </springProfile>
 </configuration>

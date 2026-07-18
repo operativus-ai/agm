@@ -34,7 +34,7 @@ export interface PiiPolicyCreateRequest {
 }
 
 /**
- * Maps to com.operativus.agentmanager.compute.security.PiiAuditLogEntity
+ * Maps to ai.operativus.agentmanager.compute.security.PiiAuditLogEntity
  */
 export interface PiiAuditLogEntry {
   id: string; // UUID

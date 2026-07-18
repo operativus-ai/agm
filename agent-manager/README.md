@@ -107,7 +107,7 @@ Always run `./mvnw clean compile` before committing — the incremental build ca
 ## Package Layout
 
 ```
-src/main/java/com/operativus/agentmanager/
+src/main/java/ai/operativus/agentmanager/
 ├── core/               Domain model — entities, DTOs, events, exceptions, SPI hooks
 │   ├── entity/         JPA entities (Agent, Run, Session, Workflow, Team, ...)
 │   ├── model/          DTOs and records (control/dto/ for API layer DTOs)
