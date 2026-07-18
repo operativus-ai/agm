@@ -522,31 +522,14 @@
          leakage. New rows are stamped with org_id by the PII advisors at write time. -->
     <include file="db/changelog/changes/112-pii-audit-log-org-id.sql" />
 
-    <!-- ============================================================
-         DEMO DATA — context:"demo" only. Loaded when the demo profile is
-         active (sets spring.liquibase.contexts=demo via application-demo.properties).
-         Skipped in production.
-         To wipe: run demo-099-wipe.sql directly via psql or a dedicated
-         Liquibase update against that file alone — do NOT include it here
-         because Liquibase parses "demo-wipe" as (demo AND NOT wipe) which
-         causes it to execute whenever the demo context is active.
-         See docs/analysis/agm-demo-data.md for design rationale.
-         ============================================================ -->
-    <include file="db/changelog/changes/demo/demo-001-users.sql" />
-    <include file="db/changelog/changes/demo/demo-002-knowledge-bases.sql" />
-    <include file="db/changelog/changes/demo/demo-003-agents.sql" />
-    <include file="db/changelog/changes/demo/demo-004-teams.sql" />
-    <include file="db/changelog/changes/demo/demo-005-sessions.sql" />
-    <include file="db/changelog/changes/demo/demo-006-runs-history.sql" />
-    <include file="db/changelog/changes/demo/demo-007-a2a.sql" />
-    <include file="db/changelog/changes/demo/demo-008-evaluations.sql" />
-    <include file="db/changelog/changes/demo/demo-009-audits.sql" />
-    <include file="db/changelog/changes/demo/demo-010-jobs.sql" />
-    <include file="db/changelog/changes/demo/demo-011-schedules.sql" />
-    <include file="db/changelog/changes/demo/demo-012-hitl-pending.sql" />
-    <include file="db/changelog/changes/demo/demo-013-vector-store.sql" />
-    <include file="db/changelog/changes/demo/demo-014-tt-demo-memstock.sql" />
-    <include file="db/changelog/changes/demo/demo-015-workflows.sql" />
+    <!-- DEMO DATA moved to the enterprise edition (Phase 3): the multi-org demo
+         (DEMO_ACME / DEMO_GLOBEX) seeds via the enterprise jar's db/changelog/ext/
+         files below, still context:"demo" only (demo profile sets
+         spring.liquibase.contexts=demo). logicalFilePath on each moved file preserves
+         the historical db/changelog/changes/demo/ identity so existing databases do
+         not re-run them. The wipe script stays manual-only (never on a changelog
+         include path): db/changelog/changes/demo/demo-099-wipe.sql in the enterprise
+         jar, context:"demo_wipe". -->
 
     <!-- Edition extension point: an edition add-on jar (e.g. agm-enterprise) may ship
          changesets at this classpath path; empty/absent in Core distributions.
