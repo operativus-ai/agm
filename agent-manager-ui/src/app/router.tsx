@@ -42,7 +42,6 @@ import { McpAdminPage } from '../features/mcp/pages/McpAdminPage';
 import { ModelsPage } from '../features/models/pages/ModelsPage';
 import { SecurityPage } from '../features/security/pages/SecurityPage';
 import { ObservabilityPage } from '../features/observability/pages/ObservabilityPage';
-import { FinOpsPage } from '../features/finops/pages/FinOpsPage';
 import { A2aMeshPage } from '../features/a2a/pages/A2aMeshPage';
 import { UserManagementPage } from '../features/users/pages/UserManagementPage';
 import { ProviderCredentialsPage } from '../features/provider-credentials/pages/ProviderCredentialsPage';
@@ -159,7 +158,6 @@ const router = createBrowserRouter([
       { path: 'models', element: <ModelsPage />, handle: { title: 'Models' } },
       { path: 'security', element: <SecurityPage />, handle: { title: 'Security & Audit' } },
       { path: 'observability', element: <ObservabilityPage />, handle: { title: 'Observability' } },
-      { path: 'finops', element: <FinOpsPage />, handle: { title: 'FinOps & Gateway' } },
       { path: 'a2a', element: <A2aMeshPage />, handle: { title: 'A2A Mesh' } },
       {
         path: 'admin/composio',

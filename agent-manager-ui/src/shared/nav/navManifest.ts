@@ -4,7 +4,7 @@ import {
   LuBookOpen, LuDatabase, LuPlug, LuPackage, LuHistory, LuSquareCheck,
   LuCalendar, LuShield, LuActivity, LuNetwork, LuCpu, LuUserCog, LuClipboardList,
   LuPuzzle, LuPlay,
-  LuChartBar, LuFlaskConical, LuShieldCheck, LuZap, LuKey, LuSparkles,
+  LuFlaskConical, LuShieldCheck, LuZap, LuKey, LuSparkles,
 } from 'react-icons/lu';
 
 export interface NavItem {
@@ -75,7 +75,6 @@ export const NAV_GROUPS: NavGroup[] = [
     title: 'Monitoring',
     items: [
       { to: '/observability', label: 'Observability', icon: LuActivity },
-      { to: '/finops', label: 'FinOps & Gateway', icon: LuChartBar },
     ],
   },
   {

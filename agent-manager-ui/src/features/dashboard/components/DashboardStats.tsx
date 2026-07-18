@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../../shared/components/ui/Card';
-import { LuBot, LuListTodo, LuServer, LuShieldAlert, LuTriangleAlert, LuDollarSign, LuZap, LuCalendarClock } from 'react-icons/lu';
+import { LuBot, LuListTodo, LuServer, LuShieldAlert, LuTriangleAlert, LuCalendarClock } from 'react-icons/lu';
 import { MonitoringApi } from '../api/monitoring-api';
 import type { GlobalStats } from '../api/monitoring-api';
 import { logger } from '../../../utils/logger';
-import { VelocitySparkline } from '../../../shared/components/charts/VelocitySparkline';
-import { useActiveBurnRates, useHistoricalTrends, useRoiStats } from '../../finops/hooks/useFinOps';
 import { orchestrationApi } from '../../../shared/api/orchestrationApi';
 import { RunStatus } from '../../../shared/types/enums';
 import type { Schedule } from '../../../shared/types/orchestration';
@@ -17,14 +15,7 @@ export const DashboardStats: React.FC = () => {
   const [pendingHitlCount, setPendingHitlCount] = useState<number>(0);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
 
-  const { data: activeBurnRates = [] } = useActiveBurnRates();
-  const { data: trendData = [] } = useHistoricalTrends(1);
-  const { data: roiStats } = useRoiStats();
 
-  // Aggregate burn rate across all active sessions (USD/hr)
-  const aggregateBurnRate = activeBurnRates.length > 0
-      ? activeBurnRates.reduce((sum, w) => sum + w.cumulativeUsd, 0) * 60
-      : 0;
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -73,8 +64,6 @@ export const DashboardStats: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const todaySpendUsd = trendData[trendData.length - 1]?.estimatedUsd ?? 0;
-  const netRoiUsd = roiStats?.netRoiUsd ?? 0;
   const totalErrors = stats ? stats.agentStats.reduce((s, a) => s + a.errorRuns, 0) : null;
   const activeSchedules = schedules.filter(s => s.isActive).length;
 
@@ -117,22 +106,6 @@ export const DashboardStats: React.FC = () => {
       color: totalErrors && totalErrors > 0 ? 'text-error' : 'text-theme-muted',
     },
     {
-      title: "Today's Spend",
-      value: `$${todaySpendUsd.toFixed(2)}`,
-      desc: 'Estimated USD today',
-      icon: LuDollarSign,
-      color: 'text-warn-amber',
-      href: '/finops',
-    },
-    {
-      title: 'Cache ROI',
-      value: netRoiUsd >= 0 ? `+$${netRoiUsd.toFixed(2)}` : `-$${Math.abs(netRoiUsd).toFixed(2)}`,
-      desc: 'Net cache savings (session)',
-      icon: LuZap,
-      color: netRoiUsd >= 0 ? 'text-info-sky' : 'text-error',
-      href: '/finops',
-    },
-    {
       title: 'Active Schedules',
       value: schedules.length > 0 ? activeSchedules.toString() : '-',
       desc: schedules.length > 0 ? `${schedules.length} total configured` : 'No schedules',
@@ -162,9 +135,6 @@ export const DashboardStats: React.FC = () => {
                  <div className="text-2xl font-bold font-mono text-theme-foreground">
                    {loading ? <span className="loading loading-spinner loading-xs"></span> : stat.value}
                  </div>
-                 {stat.title === 'Active Runs' && (
-                   <VelocitySparkline currentValue={aggregateBurnRate} maxPoints={12} isHighVelocity={aggregateBurnRate > 5.0} />
-                 )}
                </div>
                <div className="text-xs text-theme-muted/80">{stat.desc}</div>
             </div>

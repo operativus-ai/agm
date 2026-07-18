@@ -102,7 +102,6 @@ public class ControllerPreAuthorizeArchTest {
             "DataRetentionController",
             "EmbeddingBackfillAdminController",
             "EscalationsController",
-            "FinOpsAdminController",
             "JobsController",
             "ModelCatalogController",
             "MonitoringController",
