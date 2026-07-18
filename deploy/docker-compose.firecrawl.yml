@@ -1,0 +1,108 @@
+# OPTIONAL Firecrawl overlay for the production stack.
+#
+# Stands up a self-hosted Firecrawl so the backend's web-scraping tools
+# (WebScraperTool / FirecrawlSearchTool) work. Compose-merge it ON TOP of the
+# prod stack so these services join the same project network and the `app`
+# service can reach the scraper at its default APP_FIRECRAWL_BASEURL
+# (http://firecrawl-api:3002):
+#
+#   docker compose --env-file deploy/.env.prod \
+#     -f deploy/docker-compose.prod.yml \
+#     -f deploy/docker-compose.firecrawl.yml up -d
+#
+# WITHOUT this overlay the app boots fine — it health-checks Firecrawl and
+# degrades gracefully (scraping is simply unavailable). See deploy/README.md
+# → "Optional: Firecrawl (web scraping)" for sizing, env, and verification.
+#
+# ⚠️ Resource cost: this is a 5-service stack (api + headless-browser +
+# its own redis + rabbitmq + postgres) that wants ~6 vCPU / ~12 GB on top of
+# the base app. It does NOT fit a CPX31/CPX41 alongside the app — run it on a
+# larger box, a separate VM (point APP_FIRECRAWL_BASEURL at that host), or use
+# a remote Firecrawl. NOTE: the agm client sends no auth header today, so
+# Firecrawl Cloud (Bearer-key) needs a code change first; self-hosted with
+# USE_DB_AUTHENTICATION=false (below) works as-is.
+#
+# Images are pulled from GHCR (no build / no submodule needed on the box). Pin
+# the :latest tags to a digest before relying on this in production.
+
+services:
+  firecrawl-api:
+    image: ghcr.io/firecrawl/firecrawl:latest
+    restart: unless-stopped
+    # No host port: reached only by `app` over the internal compose network.
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3002"
+      ENV: local
+      USE_DB_AUTHENTICATION: "false"
+      REDIS_URL: redis://firecrawl-redis:6379
+      REDIS_RATE_LIMIT_URL: redis://firecrawl-redis:6379
+      PLAYWRIGHT_MICROSERVICE_URL: http://firecrawl-playwright:3000/scrape
+      NUQ_RABBITMQ_URL: amqp://firecrawl-rabbitmq:5672
+      POSTGRES_HOST: firecrawl-nuq-postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${FIRECRAWL_PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${FIRECRAWL_PG_PASSWORD:-postgres}
+      POSTGRES_DB: ${FIRECRAWL_PG_DB:-postgres}
+      NUM_WORKERS_PER_QUEUE: ${FIRECRAWL_NUM_WORKERS_PER_QUEUE:-8}
+      MAX_CONCURRENT_JOBS: ${FIRECRAWL_MAX_CONCURRENT_JOBS:-5}
+      # Optional: only needed for Firecrawl's own LLM-extract features.
+      OPENAI_API_KEY: ${FIRECRAWL_OPENAI_API_KEY:-}
+    command: ["node", "dist/src/harness.js", "--start-docker"]
+    depends_on:
+      firecrawl-redis:
+        condition: service_started
+      firecrawl-playwright:
+        condition: service_started
+      firecrawl-rabbitmq:
+        condition: service_healthy
+    cpus: 4.0
+    mem_limit: 8g
+    logging: &fc-logging
+      driver: "json-file"
+      options: { max-size: "10m", max-file: "3", compress: "true" }
+
+  firecrawl-playwright:
+    image: ghcr.io/firecrawl/playwright-service:latest
+    restart: unless-stopped
+    environment:
+      PORT: "3000"
+      MAX_CONCURRENT_PAGES: ${FIRECRAWL_CRAWL_CONCURRENT_REQUESTS:-10}
+      BLOCK_MEDIA: ${FIRECRAWL_BLOCK_MEDIA:-}
+    cpus: 2.0
+    mem_limit: 4g
+    tmpfs:
+      - /tmp/.cache:noexec,nosuid,size=1g
+    logging: *fc-logging
+
+  firecrawl-redis:
+    image: redis:alpine
+    restart: unless-stopped
+    command: ["redis-server", "--bind", "0.0.0.0"]
+    logging: *fc-logging
+
+  firecrawl-rabbitmq:
+    image: rabbitmq:3-management
+    restart: unless-stopped
+    command: ["rabbitmq-server"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging: *fc-logging
+
+  firecrawl-nuq-postgres:
+    image: ghcr.io/firecrawl/nuq-postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${FIRECRAWL_PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${FIRECRAWL_PG_PASSWORD:-postgres}
+      POSTGRES_DB: ${FIRECRAWL_PG_DB:-postgres}
+    volumes:
+      - firecrawl_pg_data:/var/lib/postgresql/data
+    logging: *fc-logging
+
+volumes:
+  firecrawl_pg_data:

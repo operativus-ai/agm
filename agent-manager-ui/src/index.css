@@ -1,0 +1,68 @@
+@import "tailwindcss";
+@plugin "daisyui";
+@plugin "@tailwindcss/typography";
+
+:root {
+  /* Obsidian-Control Theme Variables */
+
+  --obsidian-base: #0B0E14;      /* Deepest obsidian (Main Background) */
+  --obsidian-surface: #11141B;   /* Dark stone (Sidebar/Nav) */
+  --obsidian-elevated: #1E293B;  /* Lighter charcoal (Cards) */
+  --obsidian-stroke: #334155;    /* Subdued slate (Borders) */
+
+  /* Functional Accents */
+  --agent-blue: #3B82F6;         /* Primary Brand */
+  --active-green: #22C55E;       /* Success/Active */
+  --warn-amber: #F59E0B;         /* Warning */
+  --error-red: #EF4444;          /* Danger/Error */
+  --info-sky: #0EA5E9;           /* Information */
+
+  /* Aliases for Semantic Usage */
+  --theme-background: var(--obsidian-base);
+  --theme-card: var(--obsidian-elevated);
+  --theme-foreground: #F1F5F9;   /* Slate-100 for primary text */
+  --theme-muted: #94A3B8;        /* Slate-400 for secondary text */
+  --primary-brand: var(--agent-blue);
+
+  /* Typography / Markdown Overrides for Obsidian Theme */
+  --tw-prose-body: var(--theme-foreground);
+  --tw-prose-headings: #FFFFFF;
+  --tw-prose-lead: var(--theme-muted);
+  --tw-prose-links: var(--agent-blue);
+  --tw-prose-bold: #FFFFFF;
+  --tw-prose-counters: var(--theme-muted);
+  --tw-prose-bullets: var(--theme-muted);
+  --tw-prose-hr: var(--obsidian-stroke);
+  --tw-prose-quotes: var(--theme-foreground);
+  --tw-prose-quote-borders: var(--agent-blue);
+  --tw-prose-captions: var(--theme-muted);
+  --tw-prose-code: var(--agent-blue);
+  --tw-prose-pre-code: var(--theme-foreground);
+  --tw-prose-pre-bg: var(--obsidian-elevated);
+  --tw-prose-th-borders: var(--obsidian-stroke);
+  --tw-prose-td-borders: var(--obsidian-stroke);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--theme-background);
+  color: var(--theme-foreground);
+}
+
+@theme {
+  --color-obsidian-base: var(--obsidian-base);
+  --color-obsidian-surface: var(--obsidian-surface);
+  --color-obsidian-elevated: var(--obsidian-elevated);
+  --color-obsidian-stroke: var(--obsidian-stroke);
+  --color-agent-blue: var(--agent-blue);
+  --color-active-green: var(--active-green);
+  --color-warn-amber: var(--warn-amber);
+  --color-error-red: var(--error-red);
+  
+  --color-theme-background: var(--theme-background);
+  --color-theme-card: var(--theme-card);
+  --color-theme-foreground: var(--theme-foreground);
+  --color-theme-muted: var(--theme-muted);
+}

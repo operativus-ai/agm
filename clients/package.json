@@ -1,0 +1,11 @@
+{
+  "name": "agm-clients",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Agent Manager client workspace: shared @agm/sdk engine + headless test-client CLI + live console UI.",
+  "workspaces": [
+    "agm-sdk",
+    "test-client",
+    "console"
+  ]
+}

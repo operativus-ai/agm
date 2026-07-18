@@ -1,0 +1,1 @@
+docker exec -it <container_name> psql -U postgres -d my_project_db -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"

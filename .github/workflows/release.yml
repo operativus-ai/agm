@@ -1,0 +1,112 @@
+name: Build & Deploy
+
+# Build the two app images, push them to GHCR tagged by commit SHA, then deploy
+# them to the Hetzner box via a SELF-HOSTED runner that lives ON the box (it dials
+# OUT to GitHub, so the firewall stays locked to 22-from-your-IP / 80 / 443 — no
+# inbound SSH from GitHub-hosted runners). A workflow_dispatch with image_tag set
+# skips the build and re-deploys an existing tag = instant rollback.
+#
+# Requires: GitHub Actions billing active; a self-hosted runner registered on the
+# box with the "agm" label (see docs/how-to/agm-hetzner-gha-deployment.md).
+
+"on":
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Existing image tag to (re)deploy, e.g. a prior short SHA. Blank = build HEAD."
+        required: false
+        default: ""
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false   # never cancel an in-flight deploy
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: operativus-ai            # GHCR owner — MUST be lowercase
+
+jobs:
+  build:
+    name: Build & push images
+    # Skip building when a dispatch asks to redeploy an existing tag (rollback path).
+    if: ${{ github.event.inputs.image_tag == '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write          # push to GHCR using the run's GITHUB_TOKEN
+    outputs:
+      tag: ${{ steps.vars.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: vars
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push app
+        uses: docker/build-push-action@v6
+        with:
+          context: agent-manager
+          file: agent-manager/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/agm-core-app:${{ steps.vars.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/agm-core-app:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & push web
+        uses: docker/build-push-action@v6
+        with:
+          context: agent-manager-ui
+          file: agent-manager-ui/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/agm-core-web:${{ steps.vars.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/agm-core-web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Hetzner
+    needs: build
+    # Runs on a normal push (uses the freshly built tag) OR on a dispatch redeploy
+    # (uses the supplied tag; build was skipped).
+    if: ${{ always() && (needs.build.result == 'success' || github.event.inputs.image_tag != '') }}
+    runs-on: [self-hosted, agm]    # the runner installed ON the Hetzner box
+    steps:
+      - name: Resolve tag
+        id: tag
+        env:
+          # Pass via env (never interpolate user-controllable inputs into the shell
+          # body) and validate the charset before it reaches any command.
+          INPUT_TAG: ${{ github.event.inputs.image_tag }}
+          BUILD_TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          TAG="${INPUT_TAG:-$BUILD_TAG}"
+          if [ -z "$TAG" ]; then echo "no image tag to deploy" >&2; exit 1; fi
+          if ! printf '%s' "$TAG" | grep -Eq '^[A-Za-z0-9._-]+$'; then
+            echo "refusing invalid image tag: $TAG" >&2; exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy
+        working-directory: /opt/agent-manager
+        env:
+          IMAGE_TAG: ${{ steps.tag.outputs.tag }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # ephemeral read:packages — no PAT stored on the box
+          # Set EXTRA_COMPOSE_FILES (repo variable) to add overlays, e.g.
+          # "deploy/docker-compose.firecrawl.yml" to co-locate Firecrawl.
+          EXTRA_COMPOSE_FILES: ${{ vars.EXTRA_COMPOSE_FILES }}
+        run: deploy/hetzner/scripts/deploy-pull.sh

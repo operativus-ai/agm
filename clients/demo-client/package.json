@@ -1,0 +1,24 @@
+{
+  "name": "agm-demo-client",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Demo client for Agent Manager — a thin, typed consumer of AGM's REST + SSE surface (see clients/docs/analysis/demo-what-is-a-client.md)",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --build && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "~5.9.0",
+    "vite": "^7.0.0"
+  }
+}

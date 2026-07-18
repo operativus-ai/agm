@@ -1,0 +1,1 @@
+Rule: Always use Context7 MCP when I need library /agno-agi/agno and use library /agno-agi/agn-docs documentation, code generation, setup, or configuration steps without me having to explicitly ask. Use agno-agi/agno to find the correct documentation source before generating any code.

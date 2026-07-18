@@ -1,0 +1,1 @@
+mvn install:install-file -Dfile=libs/fast-api-0.0.1-SNAPSHOT.jar -DgroupId=com.operativus -DartifactId=fast-api -Dversion=0.0.1-SNAPSHOT -Dpackaging=jar

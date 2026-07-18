@@ -1,0 +1,96 @@
+#cloud-config
+# Bootstraps a fresh Hetzner Ubuntu 24.04 box for the Agent Manager single-VM
+# stack. Templated by Terraform (deploy_user, ssh_pubkey, volume_device).
+#
+# Order matters: the attached data volume is mounted at /var/lib/docker BEFORE
+# Docker is installed, so all container data lands on the durable, snapshot-able
+# volume rather than the server's boot disk.
+
+users:
+  - name: ${deploy_user}
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    ssh_authorized_keys:
+      - ${ssh_pubkey}
+
+package_update: true
+package_upgrade: true
+packages:
+  - ca-certificates
+  - curl
+  - gnupg
+  - ufw
+  - fail2ban
+  - unattended-upgrades
+  - rsync
+  - jq
+
+write_files:
+  # Harden sshd: key-only, no root login.
+  - path: /etc/ssh/sshd_config.d/99-hardening.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      ChallengeResponseAuthentication no
+      KbdInteractiveAuthentication no
+      X11Forwarding no
+  # Turn on automatic security updates.
+  - path: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+runcmd:
+  # ── 1. Mount the data volume at /var/lib/docker ────────────────────────────
+  - |
+    set -eux
+    DEV="${volume_device}"
+    # The volume may attach a few seconds after boot; wait for the device node.
+    for i in $(seq 1 30); do [ -b "$DEV" ] && break; sleep 2; done
+    if ! blkid "$DEV"; then mkfs.ext4 -F "$DEV"; fi
+    mkdir -p /var/lib/docker
+    UUID=$(blkid -s UUID -o value "$DEV")
+    grep -q "$UUID" /etc/fstab || echo "UUID=$UUID /var/lib/docker ext4 defaults,nofail 0 2" >> /etc/fstab
+    mount /var/lib/docker
+
+  # ── 2. Swap (safety net; this app + Postgres are memory-hungry) ────────────
+  - |
+    set -eux
+    if [ ! -f /swapfile ]; then
+      fallocate -l 2G /swapfile
+      chmod 600 /swapfile
+      mkswap /swapfile
+      swapon /swapfile
+      echo "/swapfile none swap sw 0 0" >> /etc/fstab
+    fi
+
+  # ── 3. Install Docker Engine + compose plugin (official apt repo) ──────────
+  - |
+    set -eux
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    chmod a+r /etc/apt/keyrings/docker.asc
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
+    apt-get update
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    usermod -aG docker ${deploy_user}
+    systemctl enable --now docker
+
+  # ── 4. Host firewall (defense-in-depth with the Hetzner Cloud Firewall) ────
+  - |
+    set -eux
+    ufw default deny incoming
+    ufw default allow outgoing
+    ufw allow 22/tcp
+    ufw allow 80/tcp
+    ufw allow 443/tcp
+    ufw --force enable
+    systemctl enable --now fail2ban
+
+  # ── 5. Reload sshd + prepare the app checkout dir ──────────────────────────
+  - systemctl restart ssh
+  - mkdir -p /opt/agent-manager
+  - chown ${deploy_user}:${deploy_user} /opt/agent-manager
+
+final_message: "agent-manager host bootstrap complete after $UPTIME s"

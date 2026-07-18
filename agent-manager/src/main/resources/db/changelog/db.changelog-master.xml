@@ -1,0 +1,539 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- 1. Full DDL schema: all tables, indexes, constraints -->
+    <include file="db/changelog/changes/001-schema.sql" />
+
+    <!-- 2. Seed data: models, agents, tools, PII policies, admin user -->
+    <include file="db/changelog/changes/002-seed-data.sql" />
+
+    <!-- 2a. One-time cleanup: remove legacy seed agent IDs (procurator_assistant, finance_agent)
+         renamed to (assistant, document_writer). Must follow 002-seed-data so new IDs exist first. -->
+    <include file="db/changelog/changes/051-rename-seed-agents.sql" />
+
+    <!-- 3. pgvector tables: vector_store (with hybrid search), vector_cache -->
+    <include file="db/changelog/changes/003-vector-stores.sql" />
+
+    <!-- 4. FinOps Telemetry Rates Expansion -->
+    <include file="db/changelog/changes/004-finops-telemetry-rate-update.sql" />
+
+    <!-- 5. A2A Networking Plane: api_keys (Gap 2.3), a2a_remote_agents (Gap 2.1), a2a_task_events (Gap 2.2) -->
+    <include file="db/changelog/changes/005-a2a-schema.sql" />
+
+    <!-- 6. L-2 Fix: Widen outbound_api_key for AES-256-GCM ciphertext storage -->
+    <include file="db/changelog/changes/006-a2a-encryption-patch.sql" />
+
+    <!-- 7. Multi-tenancy: Add org_id columns for RLS enforcement -->
+    <include file="db/changelog/changes/007-multi-tenancy-org-id.sql" />
+
+    <!-- 8. FinOps: Add manifest columns to teams table -->
+    <include file="db/changelog/changes/008-team-finops-manifest.sql" />
+
+    <!-- 9. Agent versioning, RBAC expansion, and alerting rules -->
+    <include file="db/changelog/changes/009-agent-versioning-and-rbac.sql" />
+
+    <!-- 10. Persistent job queue with DLQ support -->
+    <include file="db/changelog/changes/010-tier3-job-queue-persistence.sql" />
+
+    <!-- 11. Canary deployments, extension sandbox, schedule dependencies -->
+    <include file="db/changelog/changes/011-tier4-canary-sandbox-schedule-deps.sql" />
+
+    <!-- 12. Agent Identity: first-class agent credentials for zero-trust tool execution -->
+    <include file="db/changelog/changes/012-agent-credentials.sql" />
+
+    <!-- 13. Convention over Configuration: risk tiers, templates -->
+    <include file="db/changelog/changes/013-convention-over-config.sql" />
+
+    <!-- 14. Team improvements: soft-delete archived column, role constraint -->
+    <include file="db/changelog/changes/014-team-improvements.sql" />
+
+    <!-- 15. Knowledge indexes: functional index on vector_store sourceId for cascade deletes -->
+    <include file="db/changelog/changes/015-knowledge-indexes.sql" />
+
+    <!-- 16. Performance: missing indexes on high-traffic columns + FK constraints for referential integrity -->
+    <include file="db/changelog/changes/016-performance-fks-and-indexes.sql" />
+
+    <!-- 17. User Admin: disabled flag and lastLoginAt timestamp for user management -->
+    <include file="db/changelog/changes/017-user-admin-fields.sql" />
+
+    <!-- 18. Alert Integrations: outbound webhook/Slack notification channels -->
+
+    <!-- 19. Knowledge content hash dedup: unique (content_hash, knowledge_base_id) partial index -->
+    <include file="db/changelog/changes/019-knowledge-content-hash-dedup.sql" />
+
+    <!-- 20. Agentic memory vector link: add vector_id to agentic_memories for cascade delete -->
+    <include file="db/changelog/changes/020-agentic-memory-vector-link.sql" />
+
+    <!-- 21. GDPR ownership + erasure lifecycle: owner_id on knowledge tables, erasure_requests table -->
+    <include file="db/changelog/changes/021-knowledge-owner-erasure.sql" />
+
+    <!-- 22. Models security: widen api_key for AES-256-GCM ciphertext, audit cols, indexes, FK agents.model_id -->
+    <include file="db/changelog/changes/022-models-security.sql" />
+
+    <!-- 23. Background jobs queue refactor: job_type dispatcher, result storage, dedup key, crash recovery -->
+    <include file="db/changelog/changes/023-background-jobs-queue-refactor.sql" />
+
+    <!-- 24. Cascade agent_runs → agent_sessions so SessionService.deleteSession succeeds when runs exist -->
+    <include file="db/changelog/changes/024-cascade-agent-runs-session.sql" />
+
+    <!-- 25. §22.7 A2A cross-org peer isolation: add org_id to a2a_remote_agents, UNIQUE(org_id, alias) -->
+    <include file="db/changelog/changes/025-a2a-org-scope.sql" />
+
+    <!-- 26. §22.6 A2A outbound API key rotation: add key_version to a2a_remote_agents -->
+    <include file="db/changelog/changes/026-a2a-key-version.sql" />
+
+    <!-- 27. §22.5 Drop fk_a2a_task_events_agent so cross-peer notify audit rows can use peer-origin identifiers -->
+    <include file="db/changelog/changes/027-a2a-task-events-drop-agent-fk.sql" />
+
+    <!-- 28. §27.1 Scope A2: add org_id to users for JWT org_id claim encoding + tenant filter fallback -->
+    <include file="db/changelog/changes/028-user-org-id.sql" />
+
+    <!-- 29. §24.4 agent_audits append-only: BEFORE UPDATE/DELETE trigger rejects mutations unless
+         the current transaction set agm.audit_immutability_bypass='true' (DataRetentionService purge +
+         AuditErasureHandler GDPR redaction paths). -->
+    <include file="db/changelog/changes/029-agent-audits-immutability.sql" />
+
+    <!-- 30. §24.1/§24.2/§24.6 Cross-cutting audit: generalized system_audits table for non-agent
+         mutations (user admin, models, KB, teams, schedules, …) and auth events (LOGIN_SUCCESS,
+         LOGIN_FAILURE, LOGOUT). Captures org_id for tenant-scoped visibility that agent_audits
+         currently lacks. -->
+    <include file="db/changelog/changes/030-system-audits.sql" />
+
+    <!-- 31. §25.3 alert_integrations retry state: retry_count, next_retry_at, pending_payload for webhook redispatch -->
+
+    <!-- 32. Logging plan Pre-3: @Version column on agent_runs for JPA optimistic locking (R-2). -->
+    <include file="db/changelog/changes/032-agent-runs-version.sql" />
+
+    <!-- 33. Logging plan §5.12: agent_run_events insert-only audit timeline
+         (RUN_START/RUN_COMPLETE/TOOL_*/DELEGATION_*/ORCHESTRATOR_DECISION/LLM_*),
+         indexed by run_id, (org_id, event_ts DESC), session_id, event_type. Non-partitioned MVP. -->
+    <include file="db/changelog/changes/033-agent-run-events.sql" />
+
+    <!-- 34. Logging plan §5.13: enrich agent_runs with RunTelemetryAccumulator flush
+         columns (model, token totals, duration_ms, total_cost_usd, error_type/message,
+         safety_risk_score, orchestration_strategy). Zero-downtime (all DEFAULT NULL). -->
+    <include file="db/changelog/changes/034-agent-runs-telemetry-columns.sql" />
+
+    <!-- 35. Logging plan §5.14: orchestration_decisions forensic table populated from
+         ORCHESTRATOR_DECISION events on AgentRunEventBus. Strategy + decision_type +
+         selected_agent_id + rationale + JSONB payload. Indexed by run_id, (org_id, created_at DESC). -->
+    <include file="db/changelog/changes/035-orchestration-decisions.sql" />
+
+    <!-- 36. Logging plan §5.22: vw_run_tree_cost recursive CTE view. Aggregates
+         total_cost_usd across every run's parent_run_id tree at read time (Gap 17
+         Option A). Zero write-path overhead; correct under partial child flushes. -->
+    <include file="db/changelog/changes/036-run-tree-cost-view.sql" />
+
+    <!-- 37. Logging plan §5.21 follow-up: promote fk_agent_reflections_run from NOT VALID
+         to validated. Deletes pre-FK orphan reflections first, then runs VALIDATE CONSTRAINT
+         so existing rows are enforced alongside new inserts. -->
+    <include file="db/changelog/changes/037-validate-agent-reflections-fk.sql" />
+
+    <!-- 38. Observability plan Phase 1 T006: indexes that back the read-side query
+         patterns introduced alongside the observability controllers.
+         038a — idx_workflow_runs_workflow_id_created_at for T003's paginated runs list.
+         038b — idx_agent_run_events_run_id_id for SSE live-tail cursor scans (T005/T012). -->
+    <include file="db/changelog/changes/038-observability-indexes.sql" />
+
+    <!-- 39. OBS-T005: sse_tokens table backing the Postgres-cluster fallback impl of
+         SseTokenStore. Only PostgresSseTokenStore touches this; Caffeine and Redis impls
+         don't read or write it. Includes idx_sse_tokens_expires_at for the daily
+         DataRetentionService cleanup sweep. -->
+    <include file="db/changelog/changes/039-sse-tokens.sql" />
+
+    <!-- §7 Model Pinger Part 1: nullable `available` and `last_pinged_at` columns on `models`.
+         Updated by ModelAvailabilityPoller on its scheduled tick. UI surfaces as a per-row badge. -->
+    <include file="db/changelog/changes/040-models-availability.sql" />
+
+    <!-- Knowledge subsystem tenant isolation: backfill NULL knowledge_bases.org_id rows with
+         the default-system-org sentinel; replace the global UNIQUE(name) constraint with
+         UNIQUE(name, org_id) so two tenants can use the same KB names without collision. -->
+    <include file="db/changelog/changes/041-knowledge-base-tenant-isolation.sql" />
+
+    <!-- Schedule subsystem tenant isolation: backfill NULL schedules.org_id rows with
+         the default-system-org sentinel. Schedules table has no UNIQUE(name) to replace,
+         unlike knowledge_bases. -->
+    <include file="db/changelog/changes/042-schedule-tenant-isolation.sql" />
+
+    <!-- Workflow subsystem tenant isolation: backfill NULL workflows.org_id rows with
+         the default-system-org sentinel. No UNIQUE(name) to replace. Child entities
+         (workflow_steps, workflow_runs) are scoped via parent traversal. -->
+    <include file="db/changelog/changes/043-workflow-tenant-isolation.sql" />
+
+    <!-- Team subsystem tenant isolation: backfill NULL teams.org_id rows with the
+         default-system-org sentinel. Child entities (team_members, transition_edges,
+         team_tools, team_manifest) are scoped via parent traversal. -->
+    <include file="db/changelog/changes/044-team-tenant-isolation.sql" />
+
+    <!-- Agent subsystem tenant isolation: backfill NULL agents.org_id rows with the
+         default-system-org sentinel. AgentAdminService now stamps orgId on create
+         and scopes all reads/writes to the caller's org. DatabaseAgentRegistry likewise
+         scopes findById/findAll to the caller's org. -->
+    <include file="db/changelog/changes/045-agent-tenant-isolation.sql" />
+
+    <!-- Alerts subsystem tenant isolation: add org_id columns to alert_rules and
+         alert_events; backfill from parent rule (events) and DEFAULT_SYSTEM_ORG (rules).
+         AlertingService scopes CRUD/list/acknowledge to caller's org; the @Scheduled
+         evaluateRules() iterates all enabled rules across orgs (intentional — metrics
+         are global) and stamps the rule's orgId on each new AlertEvent. -->
+
+    <!-- §6 M-12 Phase 1: optional per-model RPM override. Nullable; null means
+         "no per-model gate, fall through to global limits". Phase 2 wires
+         enforcement at the LLM call site; Phase 3 surfaces a UI control. -->
+    <include file="db/changelog/changes/047-models-rate-limit-rpm.sql" />
+
+    <!-- Optional HMAC signing secret for outbound webhooks. Encrypted at rest via
+         OutboundApiKeyConverter. When set, AlertIntegrationService signs the request
+         body and adds X-AGM-Signature + X-AGM-Timestamp headers so receivers can
+         verify origin and prevent replay. -->
+
+    <!-- §9 MEM-2: per-team flag for member-memory isolation. When TRUE, orchestrators
+         derive a per-member conversationId so each member's MessageChatMemoryAdvisor
+         keeps its own bucket; when FALSE (default), members share the team session
+         memory (current behaviour). -->
+    <include file="db/changelog/changes/049-teams-isolate-memory.sql" />
+
+    <!-- DB-backed runtime configuration for the Composio dynamic tool adapter.
+         Two tables: composio_action_config (enabled actions + per-action tier classification,
+         optimistic-locked) and composio_connection_config (per-org Composio connection IDs).
+         When DB rows are empty, boot-time @Value-bound properties-file values remain in effect
+         (zero-config fallback preserved for deployments not yet migrated to DB-managed config).
+         Pairs with agmui-tool-support-composio.md §3 Edge Cases "DB > properties-file" precedence
+         and the operator runbook at agm-browser-test.md. -->
+    <include file="db/changelog/changes/050-composio-config.sql" />
+
+    <!-- Fix Path C — denormalize org_id onto agent_audits (perf upgrade for #286).
+         Adds nullable org_id column, backfills via UPDATE ... FROM agents (single
+         hash join), and creates idx_agent_audits_org_created on (org_id, created_at DESC)
+         to converge with system_audits (changeset 030). The backfill issues
+         SET LOCAL agm.audit_immutability_bypass='true' inside its own transaction
+         to satisfy the changeset 029 append-only trigger. -->
+    <include file="db/changelog/changes/052-agent-audits-org-id.sql" />
+
+    <!-- F11 + F17 — vector_cache tenant isolation + PII purge.
+         The semantic response cache (vector_cache, changeset 003) was both
+         pre-redaction (F11) and global (F17): VectorStoreCacheAdvisor ran at
+         order 5 before PII redactor's order 10, persisting raw prompts; the
+         table had no org_id column and the advisor's SearchRequest carried no
+         FilterExpression, so cache hits crossed tenants. This changeset DELETEs
+         existing rows (irrecoverable provenance + PII content) and adds a JSONB
+         btree index on metadata->>'org_id' for the org-scoped FilterExpression
+         the companion VectorStoreCacheAdvisor change introduces.
+         See .claude/reports/audit-advisor-chain-2026-05-04.md F11/F17. -->
+    <include file="db/changelog/changes/053-vector-cache-tenant-isolation.sql" />
+
+    <!-- Composite index agent_runs(status, created_at) backing the stuck-PAUSED
+         sweeper. The single-column idx_agent_runs_status (changeset 016) alone
+         forces RunExecutionManager.expireStuckPausedRuns to load every PAUSED
+         row and filter the cutoff in Java memory; this composite enables a
+         single SQL range scan on (status='PAUSED', created_at < cutoff) once
+         the companion repository method pushes the predicate into SQL. -->
+    <include file="db/changelog/changes/054-agent-runs-status-created-at-index.sql" />
+    <include file="db/changelog/changes/055-background-jobs-cancel-columns.sql" />
+
+    <!-- Add org_id to cultural_knowledge for tenant isolation. CulturalMemoryAdvisor
+         previously called cultureManager.getCulturalKnowledge() which returned all rows
+         globally — Org A could read Org B's cultural rules. This migration adds the column
+         and the repository/service/advisor are updated to filter by org_id. -->
+    <include file="db/changelog/changes/056-cultural-knowledge-org-id.sql" />
+
+    <!-- §21.4 budget enforcement: operator-configured spend ceilings per org or agent.
+         BudgetPolicyService looks up an active row at run start and binds it into
+         control.security.AgentContextHolder.CONTEXT so GenAiMetricsAdvisor can enforce
+         mid-flight. Agent-scoped policy wins over org-wide (ORDER BY agentId NULLS LAST). -->
+    <include file="db/changelog/changes/057-budget-policies.sql" />
+
+    <!-- Denormalize org_id onto workflow_runs for direct tenant isolation without a join
+         to the parent workflows table. Backfill via JOIN; orphaned runs get 'system'. -->
+    <include file="db/changelog/changes/058-workflow-runs-org-id.sql" />
+
+    <!-- Persist workflow_run_id on schedule_runs so the poller can back-propagate
+         terminal workflow status (COMPLETED/FAILED/CANCELLED) instead of stamping
+         COMPLETED at fire-and-forget dispatch time. NULL for AGENT/TEAM schedule runs. -->
+    <include file="db/changelog/changes/059-schedule-runs-workflow-run-id.sql" />
+
+    <!-- One-shot schedules (T037-3). When schedules.one_shot = true,
+         ScheduleExecutionPoller flips is_active=false at first dispatch so the
+         schedule fires exactly once. Default FALSE preserves recurring semantics. -->
+    <include file="db/changelog/changes/060-schedules-one-shot.sql" />
+
+    <!-- T036(8) approvals.payload_hash. ApprovalService computes SHA-256 over
+         (toolName + ":" + toolArguments) at creation time and verifies on resolve.
+         Mismatch = tampering between create and resolve; resolve is rejected. -->
+    <include file="db/changelog/changes/061-approvals-payload-hash.sql" />
+
+    <!-- T036(4) multi-approver quorum. approvers_required is the threshold (default 1
+         preserves single-approver behaviour); approved_by is the JSONB array of resolver
+         IDs that have voted APPROVED so far. Status flips to APPROVED only when
+         array length reaches approvers_required. -->
+    <include file="db/changelog/changes/062-approvals-quorum.sql" />
+
+    <!-- §24.4 A2A: a2a_task_events append-only trigger, mirroring agent_audits
+         changeset 029. BEFORE UPDATE OR DELETE → RAISE EXCEPTION. No bypass
+         flag today — add one when/if a legitimate GDPR redaction path is
+         needed. Closes the gap pinned by AgentAuditsImmutabilityRuntimeTest's
+         former a2a_task_events_KNOWN_GAP_isFreelyMutable_today canary. -->
+    <include file="db/changelog/changes/063-a2a-task-events-immutability.sql" />
+
+    <!-- §22.5 follow-on. UNIQUE(org_id, remote_agent_id) on a2a_remote_agents, closing
+         the duplicate-peer gap pinned by A2aPeerUniquenessRuntimeTest. Mirrors the
+         pattern from changeset 025 (UNIQUE(org_id, alias)). -->
+    <include file="db/changelog/changes/064-a2a-remote-agents-unique-remote-agent-id.sql" />
+
+    <!-- E8 optimistic locking on extensions. ExtensionRegistrationEntity gains @Version +
+         a BIGINT version column; ExtensionController exposes PUT /api/v1/extensions/{id}
+         that requires the client-known version and returns 409 on stale-version conflict.
+         JPA's @Version mechanism is the defense-in-depth at the DB level. -->
+    <include file="db/changelog/changes/065-extensions-version-column.sql" />
+
+    <!-- M7: Add org_id to agentic_memories for tenant-scoped deletion.
+         The relational ledger had no org_id while vector_store documents gained it in M4.
+         Adds nullable org_id column + three indexes (org_id, user_id+org_id, vector_id).
+         MemoryService.addMemory now populates the column; deleteMemories replaces the
+         prior findAll() full-scan with a targeted findByVectorIdIn query. -->
+    <include file="db/changelog/changes/066-agentic-memories-org-id.sql" />
+
+    <!-- M8: Add org_id to alert_integrations for tenant-scoped CRUD and dispatch.
+         listIntegrations() was calling findAll() (all tenants); onAlertFired was dispatching
+         to every enabled integration regardless of org. Adds nullable org_id + two indexes.
+         AlertIntegrationService now stamps orgId at create time and scopes all queries.
+         AlertFiredEvent gains orgId so onAlertFired dispatches only to the firing org's integrations. -->
+
+    <!-- Housekeeping: drop orphan ui_components table left behind by #659 (which deleted
+         ComponentsController + Component{Entity,Repository,DTO}). No production readers/writers
+         and no FKs reference it; Hibernate validate is permissive about extras so it stayed
+         silently. Dropping keeps the schema honest. -->
+    <include file="db/changelog/changes/068-drop-ui-components-table.sql" />
+
+    <!-- F3 optimistic locking on schedules. Concurrent PUTs against the same schedule
+         row previously did silent last-write-wins; this column activates JPA's @Version
+         and lets stale PUTs surface as 409 via GlobalExceptionHandler. Mirrors 065
+         (extensions). -->
+    <include file="db/changelog/changes/069-schedules-version-column.sql" />
+
+    <!-- F5 tenant-scope spot_batch_jobs. Adds org_id (DEFAULT 'DEFAULT_SYSTEM_ORG') +
+         index so GET /api/v1/schedules/batches can filter by caller's org instead of
+         dumping the entire table for every ROLE_ADMIN. -->
+    <include file="db/changelog/changes/070-spot-batch-jobs-org-id.sql" />
+
+    <!-- G2 tenant-scope evaluation_suites. EvaluationController had no tenant scoping;
+         adds org_id (DEFAULT 'DEFAULT_SYSTEM_ORG') + index. Child paths enforce
+         ownership via suite_id → suite.org_id checks at the controller. -->
+    <include file="db/changelog/changes/071-evaluation-suites-org-id.sql" />
+
+    <!-- REQ-DR-3 Skills system (S1 PR-1a). DB-backed reusable bundles of allowed-tools
+         + system-prompt-snippet that admins attach to agents to augment behavior at
+         run time. Agent-only attachment in v1 (team-skills deferred). INCLUDES
+         semantics: allowed_tools is a filter applied to ToolConfig.globalToolProvider
+         at injection time, not an owned tool list. -->
+    <include file="db/changelog/changes/072-create-skills-table.sql" />
+    <include file="db/changelog/changes/073-create-agent-skills-table.sql" />
+    <include file="db/changelog/changes/074-create-skill-allowed-tools-table.sql" />
+
+    <!-- REQ-DR-1 Universal Dispatch (PR-2a). Per-org routing config for the
+         POST /api/runs entry point: default_router team, fallback agent, plus
+         flags for LLM and rule-based classifier strategies. One row per org. -->
+
+    <!-- REQ-DR-2 Callable Member Composition (PR-3a). Adds member_resolver_type
+         to agents (default 'STATIC') so teams can opt into per-request member
+         resolution (ORG_TIER, FEATURE_FLAG, future strategies) without changing
+         the static members list shape. -->
+    <include file="db/changelog/changes/076-add-agent-member-resolver-type.sql" />
+
+    <!-- REQ-DR-4 Workflow Router Step (PR-1). Adds router_config JSONB to
+         workflow_steps so ROUTER rows carry structured selector config (type,
+         expression, choices map). Nullable so non-ROUTER rows are unaffected;
+         dispatcher (PR-3) falls back to AGENT behavior on action=ROUTER with
+         null router_config (defensive — matches StepActionType docstring). -->
+    <include file="db/changelog/changes/077-workflow-steps-router-config.sql" />
+
+    <!-- REQ-DR-6 PR-2. on_reject policy for CONDITION steps. NULL preserves the
+         existing skip-next-step behavior; 'CANCEL' transitions the run to
+         CANCELLED on a false evaluation. -->
+    <include file="db/changelog/changes/078-workflow-steps-on-reject.sql" />
+
+    <!-- REQ-DR-6 PR-3. else_step_id pointer for the ELSE_BRANCH on_reject
+         policy — when condition false the dispatcher jumps to this step
+         instead of the default skip-next-step. No FK constraint;
+         service-level validation enforces same-workflow membership. -->
+    <include file="db/changelog/changes/079-workflow-steps-else-step-id.sql" />
+
+    <!-- REQ-DR-6 PR-4. HITL requires_confirmation gate for CONDITION steps.
+         When true the dispatcher pauses with PAUSED + a planned cursor;
+         operator approves via /resume, rejects via DELETE/cancel. -->
+    <include file="db/changelog/changes/080-workflow-steps-requires-confirmation.sql" />
+
+    <!-- REQ-HR-1 (PR-1 of the HumanReview unification plan). Shared human_review
+         JSONB column on workflow_steps + agents + team_members so the unified
+         config struct can attach at all three subject types. PR-1 is data-shape
+         only; dispatcher integration lands in REQ-HR-3. See
+         docs/analysis/agm-human-review-unification.md. -->
+    <include file="db/changelog/changes/081-human-review-jsonb.sql" />
+
+    <!-- REQ-HR-2 (PR-2). human_review_pending table backs the unified pause/decide
+         mechanism. Rows live from HumanReviewService.pauseFor() until decide() /
+         timeout poller settles them. -->
+    <include file="db/changelog/changes/082-human-review-pending.sql" />
+
+    <!-- REQ-HR-6 (PR-6). One-shot data migration: legacy workflow_steps
+         columns (requires_confirmation, on_reject, else_step_id) → unified
+         human_review JSONB. Idempotent (WHERE human_review IS NULL); legacy
+         columns NOT dropped here. -->
+    <include file="db/changelog/changes/083-human-review-migration.sql" />
+
+    <!-- gap #8 — agents.fallback_model_ids JSONB. Ordered list of fallback
+         model ids tried by AgentClientFactory.buildChatClientForFallback when
+         the primary model is rate-limited or quota-exceeded. Consumed by
+         AgentService.run (sync) and AgentStreamManager (streaming). -->
+    <include file="db/changelog/changes/084-agents-fallback-model-ids.sql" />
+    <include file="db/changelog/changes/085-a2a-task-events-bypass.sql" />
+
+    <!-- Per-org provider API keys: replaces the env-var / Spring property
+         fallback chain in AbstractDynamicModelProvider.resolveApiKey. One row
+         per (org_id, provider) holds the encrypted default. ModelEntity.api_key
+         stays as a per-model override that takes precedence. -->
+    <include file="db/changelog/changes/086-provider-credentials.sql" />
+
+    <!-- 087 — fix-up for 086. JPA entity uses String id (→ VARCHAR), but 086
+         declared id UUID, tripping Hibernate's schema-validation. ALTER the
+         column type to VARCHAR(255). -->
+    <include file="db/changelog/changes/087-provider-credentials-id-varchar.sql" />
+
+    <!-- DR-FR-1 default-router validation. Caches the team_mode of the
+         configured default_router_agent_id at upsert time so the resolver
+         doesn't need a second AgentRegistry lookup on every dispatch. -->
+
+    <!-- DR-FR-4 routing-decision telemetry. Append-only table populated by
+         RoutingDecisionRecorderService on every resolveAgentId invocation
+         (including UNRESOLVED). Backs the admin routing-decisions endpoint
+         and observability counters. Immutability trigger mirrors 029. -->
+
+    <!-- DR-FR-2 LLM classifier — per-org classifier model selection.
+         classifier_model_id FK to models(id), nullable; NULL means use the
+         system default (agm.routing.classifier.default-model-id property). -->
+
+    <!-- DR-FR-3 semantic_scoring_enabled toggle. When TRUE strategy-3 uses
+         SemanticAgentScorer (pgvector cosine via Spring AI VectorStore)
+         instead of the substring matcher. FALSE default. -->
+
+    <!-- DR-FR-7 capability vocabulary. agents.capabilities TEXT[] tags fed
+         into the LlmAgentClassifier prompt + SemanticAgentScorer embedding
+         text. GIN index for containment lookups. -->
+    <include file="db/changelog/changes/092-agent-capabilities.sql" />
+
+    <!-- Align routing_decisions.message_hash type with the JPA mapping
+         (VARCHAR(64) instead of CHAR(64)) so ddl-auto=validate doesn't fail
+         the boot. See changeset 093 for details. -->
+
+    <!-- REQ-TT-1 TeamMode.tasks backing table. tasks owned by parent team-run via
+         ON DELETE CASCADE on team_run_id. status stored as VARCHAR(32) per AGM
+         convention; dispatch idempotency via atomic status CAS (D5). -->
+    <include file="db/changelog/changes/094-tasks-table.sql" />
+
+    <!-- REQ-DR-5 DAG engine foundation. Adds workflow_edges table — explicit
+         (from, to, condition) edges between workflow_steps so the dispatcher can
+         walk a DAG instead of step_order. Dispatcher rewrite + migration are
+         follow-up PRs; this PR ships the schema + repository + validator only. -->
+    <include file="db/changelog/changes/095-workflow-edges.sql" />
+
+    <!-- Drop workflow_steps.agent_id FK to agents.id. CONDITION and LOOP steps
+         repurpose the column to carry a predicate / bounds expression, not an
+         agent reference. Agent-existence validation for AGENT/SEQUENTIAL/PARALLEL
+         steps stays at the service layer in WorkflowService.addWorkflowStep. -->
+    <include file="db/changelog/changes/096-workflow-steps-drop-agent-fk.sql" />
+
+    <!-- Backfill storeType discriminator on existing vector_store rows so the
+         MemoryService and KnowledgeService search filters (which AND
+         metadata->>'storeType' into their predicates) match historical rows. KB
+         chunks (knowledgeBaseId present) → 'KB'; everything else → 'MEMORY'. -->
+    <include file="db/changelog/changes/097-vector-store-store-type-backfill.sql" />
+
+    <!-- Add agent_run_id to schedule_runs so AGENT/TEAM-target schedules can
+         expose a structured pointer to the run they produced (previously the
+         id lived only inside the output JSONB as {"run_id":"..."}). -->
+    <include file="db/changelog/changes/098-schedule-runs-agent-run-id.sql" />
+
+    <!-- Bug #50 — add org_id to erasure_requests so GDPR Art. 17 records carry
+         tenant context. Companion to controller-level cross-org gate. -->
+    <include file="db/changelog/changes/099-erasure-requests-org-id.sql" />
+
+    <!-- Bug #43 — promote evaluation_runs.suite_id FK to ON DELETE CASCADE so
+         DELETE /api/v1/evaluations/suites/{id} no longer 500s on suites that
+         have executed runs. -->
+    <include file="db/changelog/changes/100-evaluation-runs-cascade-suite.sql" />
+
+    <!-- Tenant-scope the pii_policies dictionary (architectural follow-up to PR #968).
+         Adds org_id NOT NULL, replaces global name-unique with (org_id, name)-unique,
+         indexes the runtime per-org fallback lookup. -->
+    <include file="db/changelog/changes/101-pii-policies-org-id.sql" />
+
+    <!-- Self-serve password reset tokens (launch checklist Phase 1 #7). Short-lived
+         bearer tokens emailed to users so they can reset their password without
+         operator intervention. Insert-once / consume-once + 30d retention. -->
+    <include file="db/changelog/changes/102-password-reset-tokens.sql" />
+
+    <!-- Live-transport NOTIFY trigger on agent_run_events: wakes the SSE event-stream
+         pump loops on insert (event-driven delivery) instead of fixed 500ms polling.
+         Pumps still replay by id, so NOTIFY is an optimization, not a correctness dep. -->
+    <include file="db/changelog/changes/103-agent-run-events-notify.sql" />
+
+    <!-- MCP transport selection (SSE | STREAMABLE_HTTP) + encrypted outbound auth secret
+         on extensions, enabling direct registration of bearer-authenticated remote MCPs
+         (e.g. the hosted GitHub MCP) without the supergateway proxy. -->
+    <include file="db/changelog/changes/104-extensions-mcp-transport-auth.sql" />
+
+    <!-- Tenant-scope the extensions registry: add org_id so MCP tools are isolated per org
+         (#1132). Legacy rows default to DEFAULT_SYSTEM_ORG. -->
+    <include file="db/changelog/changes/105-extensions-org-id.sql" />
+
+    <!-- DAG workflow engine (REQ-DR-5, DAG-3a): per-node execution trace + fan-in source
+         + future resume state. Off the live path until DAG-3b wires it behind a flag. -->
+    <include file="db/changelog/changes/106-workflow-node-runs.sql" />
+
+    <!-- DAG editor node layout (REQ-DR-5): persisted manual canvas positions so a dragged
+         layout survives reload instead of re-running ELK every load. -->
+    <include file="db/changelog/changes/107-workflow-node-layouts.sql" />
+
+    <!-- DAG frontier-aware resume (REQ-DR-5, DAG-3c): nullable JSONB snapshot of a paused DAG run's
+         non-derivable scheduler state, so resume re-enters the exact graph from the paused frontier. -->
+    <include file="db/changelog/changes/108-workflow-runs-dag-frontier.sql" />
+
+    <!-- Per-node DAG resilience: nullable retry-attempts/backoff + per-attempt timeout on
+         workflow_steps. Null inherits the global agm.workflow.dag.default-node-* default
+         ("no retry, no timeout") so existing steps are unchanged. -->
+    <include file="db/changelog/changes/109-workflow-steps-retry-timeout.sql" />
+
+    <!-- Default embedding model: seeds an EMBEDDING models row (text-embedding-3-small, reduced to
+         768d) + the DEFAULT_MODEL_EMBEDDING app_setting so the vector store gets a real embedding
+         model instead of NoOp. Inert without an OPENAI provider_credential (falls back to NoOp). -->
+    <include file="db/changelog/changes/110-default-embedding-model.sql" />
+
+    <!-- Drop the dead agent_tools join table: mapped by no entity, written by no active
+         changeset (seeds moved tool bindings to agents.tools JSONB in #1193/#1194/#1196),
+         no inbound FKs. Retires the orphan left by migration-archive/V3. Mirrors 068. -->
+    <include file="db/changelog/changes/111-drop-dead-agent-tools-table.sql" />
+
+    <!-- Tenant-scope the PII audit log (add org_id, backfill from the owning agent, index the
+         org-scoped query) so GET /api/v1/pii-policies/audit-log can be served without cross-tenant
+         leakage. New rows are stamped with org_id by the PII advisors at write time. -->
+    <include file="db/changelog/changes/112-pii-audit-log-org-id.sql" />
+
+    <!-- DEMO DATA moved to the enterprise edition (Phase 3): the multi-org demo
+         (DEMO_ACME / DEMO_GLOBEX) seeds via the enterprise jar's db/changelog/ext/
+         files below, still context:"demo" only (demo profile sets
+         spring.liquibase.contexts=demo). logicalFilePath on each moved file preserves
+         the historical db/changelog/changes/demo/ identity so existing databases do
+         not re-run them. The wipe script stays manual-only (never on a changelog
+         include path): db/changelog/changes/demo/demo-099-wipe.sql in the enterprise
+         jar, context:"demo_wipe". -->
+
+    <!-- Edition extension point: an edition add-on jar (e.g. agm-enterprise) may ship
+         changesets at this classpath path; empty/absent in Core distributions.
+         Extension changesets are ADD-ONLY with respect to Core tables. -->
+    <includeAll path="db/changelog/ext/" errorIfMissingOrEmpty="false"/>
+
+</databaseChangeLog>

@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: agent-manager-db
+    restart: always
+    environment:
+      # These variables initialize the DB on the first run
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=changeme
+      - POSTGRES_DB=agent_manager
+    ports:
+      # Map host port 5432 to container port 5432
+      - "5432:5432"
+    volumes:
+      # Persist data even if the container is deleted
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d agent_manager"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: agent-manager-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redis:
+    image: redis:7
+    container_name: agent-manager-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: agent-manager-jaeger
+    restart: always
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686" # UI
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+
+volumes:
+  postgres_data:
+  redis_data:
