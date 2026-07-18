@@ -1,6 +1,7 @@
 import { logger } from '../../utils/logger';
 import { fetchEventSource, EventStreamContentType } from '@microsoft/fetch-event-source';
 import { STORAGE_KEYS } from '../constants/storage-keys';
+import { getOrgOverride } from '../org/orgOverride';
 
 const BASE_URL = '/api';
 
@@ -48,6 +49,13 @@ export class ApiClient {
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const orgOverride = getOrgOverride();
+    if (orgOverride) {
+      // Super-admin tenant override; inert for regular users (their JWT org
+      // claim outranks this header in TenantContextFilter).
+      headers['X-Org-Id'] = orgOverride;
     }
 
     const method = options.method || 'GET';
@@ -209,6 +217,13 @@ export class ApiClient {
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const orgOverride = getOrgOverride();
+    if (orgOverride) {
+      // Super-admin tenant override; inert for regular users (their JWT org
+      // claim outranks this header in TenantContextFilter).
+      headers['X-Org-Id'] = orgOverride;
     }
 
     if (options.body) {

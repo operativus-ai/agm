@@ -19,6 +19,7 @@ export default defineConfig({
       '@ee/observability-tabs': path.resolve(__dirname, 'src/features-ee-stub/observabilityTabs.ts'),
       '@ee/dashboard-widgets': path.resolve(__dirname, 'src/features-ee-stub/dashboardWidgets.tsx'),
       '@ee/agent-admin': path.resolve(__dirname, 'src/features-ee-stub/agentAdmin.tsx'),
+      '@ee/topbar': path.resolve(__dirname, 'src/features-ee-stub/topbar.ts'),
     },
   },
   server: {
