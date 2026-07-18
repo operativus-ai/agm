@@ -1,42 +1,45 @@
-# Agent Manager
+# AGM — Agent Manager
 
-An enterprise-grade **agentic control plane** — a backend platform for orchestrating, governing, and operating AI agents at scale. Agent Manager abstracts away the operational complexity of building production AI systems: provider management, multi-agent coordination, compliance enforcement, run lifecycle, cost accountability, and observability are handled by the platform so product teams write features instead of infrastructure.
+An **agentic control plane** — a backend platform for orchestrating, governing, and operating AI agents in production. AGM abstracts away the operational complexity of building production AI systems: provider management, multi-agent coordination, compliance enforcement, run lifecycle, and observability are handled by the platform so product teams write features instead of infrastructure.
 
 ---
 
-## What It Is
+## Editions & License
 
-Agent Manager is the operational layer that sits between your application and one or more LLM providers. It does not replace your prompts or your business logic — it provides the infrastructure every production AI system eventually has to build:
+This repository is **AGM Core**, licensed under [FSL-1.1-Apache-2.0](LICENSE.md) (source-available; converts to Apache 2.0 two years after each release).
 
-- **Dynamic agent selection** — callers POST a prompt with no agent specified; the platform routes to the right specialist via LLM classifier, rule engine, or configured fallback
+Our line is simple: **safety is free; proof, control, and scale are paid.**
+
+- **Core (this repo)** ships the complete single-org platform *including every safety feature*: the full advisor safety chain (PII anonymization, content safety, tier-escalation guards), HITL approvals, budget caps, incident response (quarantine, halt-all-runs), GDPR compliance tooling, audit trails, and version rollback. Core is a real production system, not a demo.
+- **Enterprise** (separate distribution, consumes Core as a library) adds fleet-scale operations: multi-org management, dynamic agent routing / universal dispatch, SLO tracking and observability aggregates, alerting integrations (webhooks, PagerDuty), FinOps analytics and cost forecasting, bulk fleet administration, and developer-experience analytics. Contact **sales@operativus.ai**.
+
+A Core deployment never phones home and has no license checks — enterprise features simply don't exist in this codebase.
+
+## What Core Does
+
+AGM sits between your application and one or more LLM providers:
+
 - **Multi-agent orchestration** — Sequential, Planner, Router, and Swarm strategies with DAG-validated workflow execution
 - **Run lifecycle management** — queued background runs, streaming, pause/resume (HITL), cancellation, retry
 - **Compliance tiers** — TIER_1_STANDARD / TIER_2_STRICT / TIER_3_REGULATED with PII anonymization, content safety, and tier-escalation guards
 - **Provider abstraction** — OpenAI, Anthropic, Google Vertex; keys stored encrypted per org; dynamic provider initialization at boot
 - **Knowledge bases** — per-agent RAG with pgvector; multi-strategy retrieval (semantic, keyword, hybrid)
-- **Cost and FinOps** — per-run token accounting, budget caps, usage reporting
+- **Cost controls** — per-run token accounting, budget policies and caps, live burn-rate guard
+- **Incident response** — agent quarantine, emergency halt-all-runs, immutable audit trails, config version rollback
 - **A2A** — Agent-to-Agent protocol for peer discovery, health monitoring, and cross-instance delegation
-- **Full observability** — OTLP tracing (Jaeger), Micrometer metrics, structured logging with MDC propagation
+- **Full observability plumbing** — OTLP tracing (Jaeger), Micrometer metrics, structured logging with MDC propagation
 
 ---
 
 ## Repository Layout
 
 ```
-agent-manager/          Spring Boot 4 backend (Java 25)
-agent-manager-ui/       React frontend (TanStack Query/Table, XYFlow, Tailwind)
-docs/                   Architecture docs and white papers
-  features/             Feature deep-dives (.md + .docx)
+agent-manager/          Spring Boot 4 backend (Java 25) — Maven artifact ai.operativus:agm-core
+agent-manager-ui/       React frontend — npm package @operativus-ai/ui-core
+docs/                   Architecture docs and feature deep-dives
 clients/                Reference client implementations
-  demo-java-agent/      Java client demonstrating the SDK
-  demo-react-ui/        React client demonstrating the REST API
-scripts/                Dev and demo utility scripts
-a2a-java/               A2A protocol Java library
-agno/                   Agno integration
-firecrawl-local/        Firecrawl local deployment
+deploy/                 Production docker-compose stack, backup/restore scripts, runbook
 ```
-
-> `website/` is a separate marketing site — excluded from backend development scope.
 
 ---
 
@@ -45,8 +48,8 @@ firecrawl-local/        Firecrawl local deployment
 | Layer | Technology |
 |---|---|
 | Runtime | Java 25, virtual threads |
-| Framework | Spring Boot 4.0.0-SNAPSHOT, Spring Modulith 1.4.0-SNAPSHOT |
-| AI | Spring AI 2.0.0-SNAPSHOT |
+| Framework | Spring Boot 4, Spring Modulith |
+| AI | Spring AI |
 | Database | PostgreSQL 17 + pgvector |
 | Cache | Redis |
 | Tracing | Jaeger (OTLP) |
@@ -99,14 +102,11 @@ ANTHROPIC_API_KEY=sk-ant-...
 GOOGLE_API_KEY=...
 GOOGLE_PROJECT_ID=your-gcp-project   # Vertex AI embedding endpoint
 
-# Third-party integrations
-COMPOSIO_API_KEY=...
-
 # Optional: override active profile
 SPRING_PROFILES_ACTIVE=default
 ```
 
-> **Per-org LLM keys** (for multi-tenant use) are configured via `POST /api/v1/provider-credentials`, not `.env`. The `.env` keys are for local development only.
+> **Per-org LLM keys** are configured via `POST /api/v1/provider-credentials`, not `.env`. The `.env` keys are for local development only.
 
 ### 3. Run the backend
 
@@ -129,6 +129,8 @@ npm run dev
 
 The UI is available at `http://localhost:5173` (Vite default).
 
+For a production-shaped deployment (Caddy TLS, backup/restore scripts, operator runbook) see [`deploy/README.md`](deploy/README.md).
+
 ---
 
 ## Backend Commands
@@ -140,13 +142,11 @@ All commands use the Maven wrapper from the `agent-manager/` directory.
 | Run the app | `./mvnw spring-boot:run` |
 | Build jar | `./mvnw clean package` |
 | Unit tests (default) | `./mvnw test` |
-| Integration tests | `./mvnw test -Dexcluded.groups= -Dtest=ClassName` |
-| All tests | `./mvnw test -Dgroups=""` |
+| All tests incl. integration | `./mvnw test -Dexcluded.groups=` |
 | Single test class | `./mvnw test -Dtest=AgentServiceTest` |
-| Single test method | `./mvnw test -Dtest=AgentServiceTest#runsSync` |
 | Compile check | `./mvnw clean compile` |
 
-> Integration tests require a live Postgres instance and are tagged `@Tag("integration")`. Surefire excludes them by default.
+> Integration tests use Testcontainers (Docker required) and are tagged `@Tag("integration")`. Surefire excludes them by default.
 
 ---
 
@@ -155,7 +155,7 @@ All commands use the Maven wrapper from the `agent-manager/` directory.
 ```
 ┌─────────────────────────────────────────────────────┐
 │                    REST API (port 8080)               │
-│              control/controller/  (60+ endpoints)    │
+│                  control/controller/                  │
 └───────────────────────┬─────────────────────────────┘
                         │
             ┌───────────▼────────────┐
@@ -169,8 +169,8 @@ All commands use the Maven wrapper from the `agent-manager/` directory.
   │   compute/      │   │   control/          │
   │  AgentService   │   │  Persistence (JPA)  │
   │  Advisor chain  │   │  Job queue          │
-  │  Teams/routing  │   │  A2A, WebSocket     │
-  │  LLM providers  │   │  FinOps, Security   │
+  │  Teams          │   │  A2A, WebSocket     │
+  │  LLM providers  │   │  Compliance, Sec    │
   └────────┬────────┘   └─────────────────────┘
            │
    ┌───────▼────────┐
@@ -188,8 +188,8 @@ All commands use the Maven wrapper from the `agent-manager/` directory.
 ### Key packages
 
 - **`compute/`** — agent execution engine: advisor chain (RAG, PII, HITL, safety, circuit breaker, OTLP), orchestration strategies (Sequential, Planner, Router, Swarm), provider abstraction, MCP tool integration
-- **`control/`** — REST API, JPA repositories, background job queue (`PersistentJobQueueService`), A2A protocol, WebSocket streaming, compliance, FinOps
-- **`core/`** — domain model: entities, DTOs, registry interfaces, SPI hooks, exceptions, events
+- **`control/`** — REST API, JPA repositories, background job queue (`PersistentJobQueueService`), A2A protocol, WebSocket streaming, compliance
+- **`core/`** — domain model: entities, registry interfaces, SPI hooks, exceptions, events
 
 ### Advisor chain execution order
 
@@ -199,22 +199,13 @@ Advisors wrap each `ChatClient` call in priority order. Critical boundaries:
 - **TIER_2_STRICT** streaming — output-side PII redaction via `StatefulStreamingPIIAdvisor` (sliding window).
 - **HITL** — `ApprovalRequiredException` is explicitly re-thrown (not stringified) so `RunStatus.PAUSED` surfaces to the caller.
 
-### Dynamic agent selection
+### Extension points
 
-Callers can omit the agent ID entirely:
+Core is designed to be extended without forking:
 
-```
-POST /api/runs
-{ "prompt": "summarize this contract", "orgId": "..." }
-```
-
-`RoutingResolverService` applies a four-step cascade:
-1. `defaultRouterAgentId` (org config)
-2. LLM classifier (structured-output `RouterDecision`)
-3. Rule classifier (JSONPath expressions)
-4. `fallbackAgentId`
-
-Enable via `agm.universal-dispatch.enabled=true` in `application.properties`.
+- **`core/spi/`** — service-provider interfaces (custom tools, agent lifecycle hooks, workflow step executors, PII scrubbers, advisor contributors) discovered via Spring beans or `META-INF/services`
+- **`db/changelog/ext/`** — an add-on jar may ship additional Liquibase changesets at this classpath path (add-only with respect to Core tables)
+- **UI manifest seams** — the frontend merges edition route/nav/widget manifests at build time via `@ee/*` aliases (Core ships empty stubs)
 
 ---
 
@@ -224,7 +215,6 @@ All tunables live in `agent-manager/src/main/resources/application.properties` u
 
 | Section | Controls |
 |---|---|
-| `agm.universal-dispatch.*` | Org-level request routing without agent ID |
 | `agm.member-resolver.*` | Team member resolution strategy |
 | `agm.orchestration.*` | Concurrency caps, team size limits |
 | `agm.compliance.*` | Tier defaults, PII, content safety |
@@ -244,40 +234,18 @@ Add schema changes by creating a new changelog entry in:
 agent-manager/src/main/resources/db/changelog/db.changelog-master.xml
 ```
 
----
-
-## Documentation
-
-Extended documentation lives in [`docs/features/`](docs/features/):
-
-| Document | Description |
-|---|---|
-| `agm-features.md` | Full feature reference |
-| `agm-features-wp.md` | Enterprise white paper (CTO/VP audience) |
-| `agm-dynamic-agent-routing.md` | Dynamic agent routing deep-dive |
-| `agm-architecture.md` | Architectural overview |
-| `agm-cto-pitch.md` | Executive pitch deck narrative |
-| `agm-developer-deep-dive.md` | Developer implementation guide |
-| `agm-technical.md` | Technical reference |
-
-All `.md` files have a corresponding `.docx` export.
+Never edit an already-merged changeset — add a new one.
 
 ---
 
 ## Development Notes
 
 - `spring.docker.compose.enabled=false` — Spring auto-compose is off; bring infrastructure up manually with `docker compose`.
-- `SpringAiRetryAutoConfiguration` is excluded; the app uses `@EnableRetry` directly.
 - Virtual threads are enabled; anything touching MDC must use Micrometer Context Propagation.
-- The `website/` directory is a separate project — do not include it in backend audits or PRs.
 - Always run `./mvnw clean compile` before committing; the incremental cache can mask overload-ambiguity errors.
 
 ---
 
 ## Contributing
 
-1. Create a branch per feature/fix, stacked on `main`
-2. Run `./mvnw clean compile` and `./mvnw test` before pushing
-3. Follow the Domain Responsibility / State Javadoc pattern for new top-level classes
-4. New background work → implement `JobHandler` + register it; do not use ad-hoc `@Async` methods
-5. New cross-module features → add or extend an interface in `core/registry/`, not a direct service injection
+See [CONTRIBUTING.md](CONTRIBUTING.md) (DCO sign-off required). Security reports: [SECURITY.md](SECURITY.md).
