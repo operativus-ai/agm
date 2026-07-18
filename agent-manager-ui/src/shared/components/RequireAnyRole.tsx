@@ -2,8 +2,10 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/context/AuthContext';
 
+import type { Role } from '../constants/roles';
+
 interface RequireAnyRoleProps {
-  roles: string[];
+  roles: Role[];
   children: React.ReactNode;
   redirectTo?: string;
 }
@@ -22,7 +24,7 @@ export const RequireAnyRole: React.FC<RequireAnyRoleProps> = ({
 
   if (isLoading) return null;
 
-  if (!user?.roles?.some((r) => roles.includes(r))) {
+  if (!user?.roles?.some((r) => (roles as readonly string[]).includes(r))) {
     return <Navigate to={redirectTo} replace />;
   }
 

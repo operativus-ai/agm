@@ -1,3 +1,4 @@
+import { ROLES, ASSIGNABLE_ROLES } from '../../../shared/constants/roles';
 import React, { useState, useEffect } from 'react';
 import type { UserAdmin, UserCreateRequest, UserUpdateRequest } from '../../../shared/types/api';
 import { Typography } from '../../../shared/components/ui/Typography';
@@ -6,7 +7,7 @@ import { Input } from '../../../shared/components/ui/Input';
 import { Dialog } from '../../../shared/components/ui/Dialog';
 import { useUnsavedChangesGuard } from '../../../shared/hooks/useUnsavedChangesGuard';
 
-const ALL_ROLES = ['ROLE_VIEWER', 'ROLE_USER', 'ROLE_OPERATOR', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'];
+const ALL_ROLES = ASSIGNABLE_ROLES;
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -20,7 +21,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [roles, setRoles] = useState<string[]>(['ROLE_VIEWER']);
+  const [roles, setRoles] = useState<string[]>([ROLES.VIEWER]);
   const [disabled, setDisabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +37,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
       setUsername('');
       setEmail('');
       setPassword('');
-      setRoles(['ROLE_VIEWER']);
+      setRoles([ROLES.VIEWER]);
       setDisabled(false);
     }
     setError(null);

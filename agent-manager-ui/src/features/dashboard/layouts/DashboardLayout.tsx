@@ -1,3 +1,4 @@
+import { ROLES } from '../../../shared/constants/roles';
 import React, { useState } from 'react';
 import { NavLink as RouterNavLink, Outlet, useLocation, useMatches } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
@@ -93,8 +94,8 @@ export const DashboardLayout: React.FC = () => {
     });
   };
 
-  const isSuperAdmin = user?.roles?.includes('ROLE_SUPER_ADMIN') ?? false;
-  const isAdmin = (user?.roles?.some((r) => r === 'ROLE_ADMIN' || r === 'ROLE_SUPER_ADMIN')) ?? false;
+  const isSuperAdmin = user?.roles?.includes(ROLES.SUPER_ADMIN) ?? false;
+  const isAdmin = (user?.roles?.some((r) => r === ROLES.ADMIN || r === ROLES.SUPER_ADMIN)) ?? false;
   const { license } = useLicense();
   const canSee = (item: NavItemDef): boolean => {
     if (item.featureKey && !license.features.includes(item.featureKey)) return false;
