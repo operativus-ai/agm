@@ -1,0 +1,55 @@
+name: Publish agm-core
+
+# Publishes ai.operativus:agm-core (library jar, exec jar, test-jar) to GitHub
+# Packages on every backend change merged to main. This is the interim registry
+# that decouples agm-enterprise builds from a local ~/.m2 install; Maven Central
+# (the `central` pom profile) takes over as the public registry once the
+# Sonatype namespace + GPG key exist.
+#
+# Auth: the run's own GITHUB_TOKEN (packages: write). The repo is public, so
+# consumers (agm-enterprise CI, contributor machines) can read the package with
+# any authenticated token — no cross-repo PAT required.
+
+"on":
+  push:
+    branches: [main]
+    paths:
+      - 'agent-manager/**'
+  workflow_dispatch: {}
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Deploy to GitHub Packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+    defaults:
+      run:
+        working-directory: agent-manager
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+          server-id: github          # writes settings.xml creds for the pom's distributionManagement id
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+
+      - name: Deploy
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./mvnw -B deploy -DskipTests
