@@ -1,3 +1,4 @@
+import { ROLES } from '../../../shared/constants/roles';
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChatSidebar } from '../components/ChatSidebar';
@@ -42,7 +43,7 @@ export const ChatPage: React.FC = () => {
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
   const [agentNotFound, setAgentNotFound] = useState(false);
   const { user } = useAuth();
-  const isAdmin = user?.roles?.includes('ROLE_ADMIN') || user?.roles?.includes('ROLE_SUPER_ADMIN');
+  const isAdmin = user?.roles?.includes(ROLES.ADMIN) || user?.roles?.includes(ROLES.SUPER_ADMIN);
 
   /** All agents available to switch to — only fetched for admins, since non-admins
    *  pick their starting agent from /chat (ChatAgentPickerPage) but can't reassign

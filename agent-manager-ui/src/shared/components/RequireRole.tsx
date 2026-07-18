@@ -2,8 +2,10 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/context/AuthContext';
 
+import type { Role } from '../constants/roles';
+
 interface RequireRoleProps {
-  role: string;
+  role: Role;
   children: React.ReactNode;
   redirectTo?: string;
 }

@@ -1,3 +1,4 @@
+import { ROLES } from '../shared/constants/roles';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 // Edition route manifest — resolves to an empty stub in the Core build (agm-core-oss-execution.md §4.5).
 import { eeRoutes } from '@ee/routes';
@@ -142,7 +143,7 @@ const router = createBrowserRouter([
       {
         path: 'memory',
         element: (
-          <RequireAnyRole roles={['ROLE_ADMIN', 'ROLE_SUPER_ADMIN']}>
+          <RequireAnyRole roles={[ROLES.ADMIN, ROLES.SUPER_ADMIN]}>
             <MemoryManagerPage />
           </RequireAnyRole>
         ),
@@ -162,7 +163,7 @@ const router = createBrowserRouter([
       {
         path: 'admin/composio',
         element: (
-          <RequireRole role="ROLE_SUPER_ADMIN">
+          <RequireRole role={ROLES.SUPER_ADMIN}>
             <ComposioAdminPage />
           </RequireRole>
         ),
