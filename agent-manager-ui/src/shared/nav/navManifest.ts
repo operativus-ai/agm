@@ -4,7 +4,7 @@ import {
   LuBookOpen, LuDatabase, LuPlug, LuPackage, LuHistory, LuSquareCheck,
   LuCalendar, LuShield, LuActivity, LuNetwork, LuCpu, LuUserCog, LuClipboardList,
   LuBell, LuBellRing, LuDollarSign, LuPuzzle, LuPlay,
-  LuChartBar, LuFlaskConical, LuShieldCheck, LuZap, LuKey, LuShuffle, LuList, LuSparkles,
+  LuChartBar, LuFlaskConical, LuShieldCheck, LuZap, LuKey, LuSparkles,
 } from 'react-icons/lu';
 
 export interface NavItem {
@@ -94,8 +94,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: '/admin/users', label: 'Users', icon: LuUserCog },
       { to: '/admin/provider-credentials', label: 'Provider Credentials', icon: LuKey },
-      { to: '/admin/routing-config', label: 'Routing Config', icon: LuShuffle },
-      { to: '/admin/routing-decisions', label: 'Routing Decisions', icon: LuList },
       { to: '/admin/agents', label: 'Manage Agents', icon: LuShieldCheck },
       { to: '/security', label: 'Security & Audit', icon: LuShield },
       { to: '/admin/audit-logs', label: 'Audit Logs', icon: LuClipboardList },

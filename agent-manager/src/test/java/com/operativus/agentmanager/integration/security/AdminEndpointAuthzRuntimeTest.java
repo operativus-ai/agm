@@ -156,11 +156,6 @@ public class AdminEndpointAuthzRuntimeTest extends BaseIntegrationTest {
             // Live provider catalog passthrough — admin-only since it exposes provider-side
             // metadata and uses the org's ProviderCredential to call the provider API.
             new EndpointSpec("/api/v1/models/catalog/OPENAI", HttpMethod.GET, null),
-            // DR-FR-4 routing-decision telemetry — admin-only read surface.
-            new EndpointSpec("/api/v1/admin/routing-decisions", HttpMethod.GET, null),
-            new EndpointSpec("/api/v1/admin/routing-decisions/non-existent-id", HttpMethod.GET, null),
-            // Routing-vector backfill — admin eager-populates routing_vectors for the org.
-            new EndpointSpec("/api/v1/admin/routing-embeddings/backfill", HttpMethod.POST, null),
             // Alert rule + alert-event admin surface (AlertingController). Reads
             // (/api/alerts/rules, /api/alerts/events) are intentionally open to any
             // authenticated tenant member with service-layer tenant scoping; only the

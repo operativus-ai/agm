@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  *   org's {@code vector_store} rows under the currently-elected embedding model — the operational
  *   step after pointing {@code DEFAULT_MODEL_EMBEDDING} at a real model (so the chunks embedded by
  *   the previous/NoOp model are rebuilt without re-uploading documents). Class-level
- *   {@code hasRole('ADMIN')} per the sibling-controller pattern (cf. {@code RoutingEmbeddingsAdminController}).
+ *   {@code hasRole('ADMIN')} per the sibling-controller pattern.
  * State: Stateless.
  */
 @RestController

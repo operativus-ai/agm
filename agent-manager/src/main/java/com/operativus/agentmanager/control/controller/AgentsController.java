@@ -271,7 +271,7 @@ public class AgentsController {
                     org.springframework.util.MimeType mimeType = org.springframework.util.MimeTypeUtils.parseMimeType(input.type());
                     if (input.data().startsWith("http")) {
                         // SSRF guard (RFC-1918 / loopback / 169.254 / 0.0.0.0) — must pass
-                        // before any network I/O. Mirrors UniversalDispatchController.mapMedia.
+                        // before any network I/O.
                         String ssrfError = SsrfGuard.validate(input.data(), false);
                         if (ssrfError != null) {
                             throw new IllegalArgumentException(

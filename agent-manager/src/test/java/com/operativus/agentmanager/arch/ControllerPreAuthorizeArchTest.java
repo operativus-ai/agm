@@ -108,8 +108,6 @@ public class ControllerPreAuthorizeArchTest {
             "MonitoringController",
             "PiiAdminController",                       // gated by PR #968 — closes TODO_SUSPECTED_GAP surfaced by this test in PR #967
             "ProviderCredentialAdminController",
-            "RoutingDecisionAdminController",
-            "RoutingEmbeddingsAdminController",
             "SystemAuditLogController",
             "UserAdminController",
             "WorkflowsController"));
