@@ -26,7 +26,7 @@ services:
       context: ../agent-manager-ui
     # Pull from GHCR when IMAGE_TAG is a CI-built tag (release.yml); the build:
     # block above still lets the manual build-on-server path tag this name locally.
-    image: ghcr.io/sesker69/agm-web:${IMAGE_TAG:-latest}
+    image: ghcr.io/operativus-ai/agm-core-web:${IMAGE_TAG:-latest}
     restart: unless-stopped
     depends_on:
       app:
@@ -49,7 +49,7 @@ services:
   app:
     build:
       context: ../agent-manager
-    image: ghcr.io/sesker69/agm-app:${IMAGE_TAG:-latest}
+    image: ghcr.io/operativus-ai/agm-core-app:${IMAGE_TAG:-latest}
     restart: unless-stopped
     depends_on:
       postgres:

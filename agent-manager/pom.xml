@@ -13,18 +13,28 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>agm-core</name>
 	<description>AGM Core — open agent governance runtime (library + bootable app)</description>
-	<url/>
+	<url>https://github.com/operativus-ai/agm</url>
 	<licenses>
-		<license/>
+		<license>
+			<name>Functional Source License, Version 1.1, Apache 2.0 Future License</name>
+			<url>https://github.com/operativus-ai/agm/blob/main/LICENSE.md</url>
+			<distribution>repo</distribution>
+		</license>
 	</licenses>
 	<developers>
-		<developer/>
+		<developer>
+			<id>operativus</id>
+			<name>Operativus</name>
+			<email>engineering@operativus.ai</email>
+			<organization>Operativus, Inc.</organization>
+			<organizationUrl>https://operativus.ai</organizationUrl>
+		</developer>
 	</developers>
 	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
+		<connection>scm:git:https://github.com/operativus-ai/agm.git</connection>
+		<developerConnection>scm:git:git@github.com:operativus-ai/agm.git</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/operativus-ai/agm</url>
 	</scm>
 	<properties>
 		<java.version>25</java.version>
@@ -450,4 +460,62 @@
 		</repository>
 	</distributionManagement>
 
+	<profiles>
+		<!-- Maven Central publishing (Phase 4). Inert by default: activate with
+		     `./mvnw -Pcentral deploy`. Requires a Sonatype Central portal token in
+		     ~/.m2/settings.xml (server id `central`) and a GPG signing key.
+		     Central requires sources + javadoc jars and signed artifacts. -->
+		<profile>
+			<id>central</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals><goal>jar-no-fork</goal></goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<configuration>
+							<doclint>none</doclint>
+							<quiet>true</quiet>
+						</configuration>
+						<executions>
+							<execution>
+								<id>attach-javadocs</id>
+								<goals><goal>jar</goal></goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals><goal>sign</goal></goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.sonatype.central</groupId>
+						<artifactId>central-publishing-maven-plugin</artifactId>
+						<version>0.6.0</version>
+						<extensions>true</extensions>
+						<configuration>
+							<publishingServerId>central</publishingServerId>
+							<autoPublish>false</autoPublish>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

@@ -25,7 +25,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  OWNER: sesker69            # GHCR owner — MUST be lowercase
+  OWNER: operativus-ai            # GHCR owner — MUST be lowercase
 
 jobs:
   build:
@@ -60,8 +60,8 @@ jobs:
           file: agent-manager/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/agm-app:${{ steps.vars.outputs.tag }}
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/agm-app:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/agm-core-app:${{ steps.vars.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/agm-core-app:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -72,8 +72,8 @@ jobs:
           file: agent-manager-ui/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/agm-web:${{ steps.vars.outputs.tag }}
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/agm-web:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/agm-core-web:${{ steps.vars.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/agm-core-web:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
