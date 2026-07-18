@@ -1,7 +1,7 @@
 # Contributing to AGM
 
 Thanks for your interest in contributing! AGM Core is developed in the open under
-the [FSL-1.1-Apache-2.0](LICENSE.md) license.
+the [FSL-1.1-ALv2](LICENSE.md) license.
 
 ## Developer Certificate of Origin (DCO)
 

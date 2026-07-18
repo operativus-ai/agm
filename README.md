@@ -6,7 +6,7 @@ An **agentic control plane** — a backend platform for orchestrating, governing
 
 ## Editions & License
 
-This repository is **AGM Core**, licensed under [FSL-1.1-Apache-2.0](LICENSE.md) (source-available; converts to Apache 2.0 two years after each release).
+This repository is **AGM Core**, licensed under [FSL-1.1-ALv2](LICENSE.md) (source-available; converts to Apache 2.0 two years after each release).
 
 Our line is simple: **safety is free; proof, control, and scale are paid.**
 

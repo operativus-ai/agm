@@ -31,7 +31,7 @@ public class DemoStartupBanner implements ApplicationListener<ApplicationReadyEv
         log.warn("    Seeded agents      : 9 (demo_*)                             ");
         log.warn("    Seeded users       : demo-admin / demo-analyst /            ");
         log.warn("                         demo-viewer / demo-ops                 ");
-        log.warn("    Shared password    : yamaha69                               ");
+        log.warn("    Shared password    : see the enterprise demo seed docs         ");
         log.warn("                                                                ");
         log.warn("    DO NOT use in production. Wipe with:                        ");
         log.warn("        ./scripts/reset-demo.sh                                 ");

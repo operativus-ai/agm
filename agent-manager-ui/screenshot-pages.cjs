@@ -6,7 +6,7 @@ const BASE_URL = 'http://localhost:5174';
 const OUT_DIR = '/Users/scottesker/Development/Projects/AI/agent-manager/website/assets/screenshots';
 
 const FAKE_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJzZXNrZXIiLCJyb2xlcyI6WyJhZG1pbiJdLCJpYXQiOjE3MTM0MDA0MjIsImV4cCI6OTk5OTk5OTk5OX0.placeholder';
-const FAKE_USER = JSON.stringify({ id: '1', username: 'sesker', email: 'scott.esker@operativus.ai', roles: ['admin'] });
+const FAKE_USER = JSON.stringify({ id: '1', username: 'demo-admin', email: 'demo-admin@example.com', roles: ['admin'] });
 
 const PAGES = [
   { route: '/',              file: 'dashboard.png' },
