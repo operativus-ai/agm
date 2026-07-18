@@ -1,0 +1,1 @@
+package ai.operativus.agentmanager; import org.springframework.ai.chat.client.ChatClientResponse; public class CheckType { public static void main(String[] args) { System.out.println("IS_INTERFACE=" + ChatClientResponse.class.isInterface()); }}

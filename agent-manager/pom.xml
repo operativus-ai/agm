@@ -8,7 +8,7 @@
 		<version>4.0.7</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.operativus</groupId>
+	<groupId>ai.operativus</groupId>
 	<artifactId>agm-core</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>agm-core</name>

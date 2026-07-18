@@ -1,5 +1,5 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.operativus.agentmanager.core.model.definitions.AgentDefinition;
+import ai.operativus.agentmanager.core.model.definitions.AgentDefinition;
 
 public class TestDeserialization {
     public static void main(String[] args) throws Exception {

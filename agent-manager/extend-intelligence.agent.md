@@ -17,7 +17,7 @@ Tools allow the agent to interact with the outside world (APIs, Databases, Syste
 
 ### Example:
 ```java
-package com.operativus.agentmanager.tools;
+package ai.operativus.agentmanager.tools;
 
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -53,7 +53,7 @@ Advisors intercept the chat loop to modify the **Prompt** (before sending to LLM
 
 ### Example:
 ```java
-package com.operativus.agentmanager.advisor;
+package ai.operativus.agentmanager.advisor;
 
 import org.springframework.ai.chat.client.advisor.CallAroundAdvisor;
 import org.springframework.ai.chat.client.advisor.CallAroundAdvisorChain;

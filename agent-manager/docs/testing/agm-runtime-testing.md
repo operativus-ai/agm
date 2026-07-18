@@ -8,7 +8,7 @@
 
 ## 1. Harness contract
 
-All runtime tests extend `com.operativus.agentmanager.integration.BaseIntegrationTest` and are tagged `@Tag("integration")`. They are excluded from `./mvnw test` and run only via `./mvnw test -Dgroups=integration`.
+All runtime tests extend `ai.operativus.agentmanager.integration.BaseIntegrationTest` and are tagged `@Tag("integration")`. They are excluded from `./mvnw test` and run only via `./mvnw test -Dgroups=integration`.
 
 **Rules that apply to every category below:**
 - **HTTP, not services.** Hit the controller over `TestRestTemplate` on the random port. Never inject a service and call it directly — that bypasses the filter chain, advisors, rate limiter, tenant filter, and JSON (de)serialization.
@@ -514,7 +514,7 @@ Each `@Scheduled` in the codebase:
 ## 28. Test file organization
 
 ```
-src/test/java/com/operativus/agentmanager/integration/
+src/test/java/ai/operativus/agentmanager/integration/
 ├── BaseIntegrationTest.java                (harness)
 ├── auth/                                   (§3)
 ├── dashboard/                              (§4)
@@ -555,7 +555,7 @@ src/test/java/com/operativus/agentmanager/integration/
     └── ErrorTaxonomyTest.java              (§27.11)
 ```
 
-Each directory holds one test class per controller / per orchestrator / per handler, named `<Feature>RuntimeTest.java`. Shared test data builders live in `src/test/java/com/operativus/agentmanager/integration/support/TestData.java`.
+Each directory holds one test class per controller / per orchestrator / per handler, named `<Feature>RuntimeTest.java`. Shared test data builders live in `src/test/java/ai/operativus/agentmanager/integration/support/TestData.java`.
 
 ---
 
