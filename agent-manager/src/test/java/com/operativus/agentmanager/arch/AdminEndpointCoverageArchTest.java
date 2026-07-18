@@ -143,13 +143,11 @@ public class AdminEndpointCoverageArchTest {
             "com.operativus.agentmanager.control.controller.MemoryController#addMemory",                                     // focused: MemoryAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.MemoryController#deleteMemories",                                // focused: MemoryAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.MemoryController#optimizeMemories",                              // focused: MemoryAdminAuthzRuntimeTest
-            "com.operativus.agentmanager.control.controller.observability.SecurityInterceptsController#getCounts",           // focused: MiscAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.SchedulesController#createSchedule",                             // focused: SchedulesAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.SchedulesController#deleteSchedule",                             // focused: SchedulesAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.SchedulesController#triggerSchedule",                            // focused: SchedulesAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.SchedulesController#updateSchedule",                             // focused: SchedulesAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.SettingsController#updateSettings",                              // focused: MiscAdminAuthzRuntimeTest
-            "com.operativus.agentmanager.control.controller.SloController#getSloStatus",                                     // focused: MiscAdminAuthzRuntimeTest
             "com.operativus.agentmanager.control.controller.WorkflowsController#addWorkflowEdge",                            // focused: WorkflowEdgesEndpointRuntimeTest
             "com.operativus.agentmanager.control.controller.WorkflowsController#deleteWorkflowEdge",                         // focused: WorkflowEdgesEndpointRuntimeTest
             "com.operativus.agentmanager.control.controller.WorkflowsController#updateWorkflowEdge",                         // focused: WorkflowEdgesEndpointRuntimeTest

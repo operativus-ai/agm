@@ -37,7 +37,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   {@code ScheduleExecutionPoller.evaluateSchedules},
  *   {@code PersistentJobQueueService.processQueue},
  *   {@code PeerHealthMonitor.checkPeerHealth},
- *   {@code SloTrackingService.evaluateSlos},
  *   {@code BatchReasoningQueueService.processBatch},
  *   {@code MemoryConsolidationWorker.processPendingMemoryExtractions},
  *   {@code EphemeralSwarmContext.evictStaleContexts}.
@@ -278,7 +277,6 @@ public class ScheduledTasksRuntimeTest extends BaseIntegrationTest {
                 SchedulerTestSupport::tickSchedulePoll,
                 SchedulerTestSupport::tickJobQueue,
                 SchedulerTestSupport::tickPeerHealth,
-                SchedulerTestSupport::tickSloEvaluation,
                 SchedulerTestSupport::tickBatchReasoning,
                 SchedulerTestSupport::tickMemoryConsolidation,
                 SchedulerTestSupport::tickSwarmCleanup

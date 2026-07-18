@@ -10,7 +10,6 @@ import com.operativus.agentmanager.control.service.ApprovalService;
 import com.operativus.agentmanager.control.service.DataRetentionService;
 import com.operativus.agentmanager.control.service.PersistentJobQueueService;
 import com.operativus.agentmanager.control.service.ScheduleExecutionPoller;
-import com.operativus.agentmanager.control.service.SloTrackingService;
 
 /**
  * Domain Responsibility: Direct-invoke façade for every {@code @Scheduled} bean in
@@ -43,7 +42,6 @@ public class SchedulerTestSupport {
     private final ScheduleExecutionPoller schedules;
     private final PersistentJobQueueService jobQueue;
     private final PeerHealthMonitor peerHealth;
-    private final SloTrackingService slo;
     private final BatchReasoningQueueService batchReasoning;
     private final MemoryConsolidationWorker memory;
     private final EphemeralSwarmContext swarm;
@@ -55,7 +53,6 @@ public class SchedulerTestSupport {
                                 ScheduleExecutionPoller schedules,
                                 PersistentJobQueueService jobQueue,
                                 PeerHealthMonitor peerHealth,
-                                SloTrackingService slo,
                                 BatchReasoningQueueService batchReasoning,
                                 MemoryConsolidationWorker memory,
                                 EphemeralSwarmContext swarm) {
@@ -66,7 +63,6 @@ public class SchedulerTestSupport {
         this.schedules = schedules;
         this.jobQueue = jobQueue;
         this.peerHealth = peerHealth;
-        this.slo = slo;
         this.batchReasoning = batchReasoning;
         this.memory = memory;
         this.swarm = swarm;
@@ -102,10 +98,6 @@ public class SchedulerTestSupport {
 
     public void tickPeerHealth() {
         peerHealth.checkPeerHealth();
-    }
-
-    public void tickSloEvaluation() {
-        slo.evaluateSlos();
     }
 
     public void tickBatchReasoning() {

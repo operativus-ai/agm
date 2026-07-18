@@ -16,6 +16,8 @@ export default defineConfig({
     alias: {
       '@ee/routes': path.resolve(__dirname, 'src/features-ee-stub/routes.tsx'),
       '@ee/nav': path.resolve(__dirname, 'src/features-ee-stub/nav.ts'),
+      '@ee/observability-tabs': path.resolve(__dirname, 'src/features-ee-stub/observabilityTabs.ts'),
+      '@ee/dashboard-widgets': path.resolve(__dirname, 'src/features-ee-stub/dashboardWidgets.tsx'),
     },
   },
   server: {
