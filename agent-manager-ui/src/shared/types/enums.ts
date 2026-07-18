@@ -23,13 +23,6 @@ export const RunStatus = {
 
 export type RunStatus = typeof RunStatus[keyof typeof RunStatus];
 
-export const RoleType = {
-  ADMIN: 'admin',
-  USER: 'user'
-} as const;
-
-export type RoleType = typeof RoleType[keyof typeof RoleType];
-
 export const MessageRole = {
   USER: 'user',
   ASSISTANT: 'assistant',
